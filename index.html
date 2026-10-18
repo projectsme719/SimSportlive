@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>دیوار افغان</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <style>
+        body { font-family: 'Vazirmatn', sans-serif; background-color: #f3f4f6; user-select: none; -webkit-tap-highlight-color: transparent; }
+        ::-webkit-scrollbar { display: none; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .tab-active { color: #ef4444; font-weight: bold; }
+        .tab-inactive { color: #9ca3af; }
+    </style>
+</head>
+<body class="pb-16 text-gray-800">
+    <header class="bg-white shadow-sm sticky top-0 z-50 p-4 rounded-b-2xl flex items-center justify-between">
+        <h1 class="text-xl font-bold text-gray-800">دیوار افغان</h1>
+        <button onclick="toggleSearch()" class="text-gray-600 p-2 bg-gray-100 rounded-full">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </button>
+    </header>
+    <div id="searchBox" class="hidden bg-white p-4 shadow-md fade-in">
+        <input type="text" id="searchInput" placeholder="جستجو در آگهی‌ها..." class="w-full bg-gray-100 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-red-400 transition">
+        <button onclick="searchAds()" class="mt-2 w-full bg-red-500 text-white rounded-xl py-2 font-bold">جستجو</button>
+    </div>
+    <main id="homePage" class="p-4 fade-in">
+        <h2 class="font-bold text-gray-700 mb-3">دسته‌بندی‌ها</h2>
+        <div class="grid grid-cols-4 gap-3 mb-6" id="categoriesGrid"></div>
+        <h2 class="font-bold text-gray-700 mb-3">جدیدترین آگهی‌ها</h2>
+        <div id="adsList" class="space-y-3"><p class="text-center text-gray-500 py-4">در حال بارگذاری...</p></div>
+    </main>
+    <main id="createPage" class="hidden p-4 fade-in">
+        <h2 class="font-bold text-lg mb-4 text-center">ثبت آگهی جدید</h2>
+        <form id="createForm" class="space-y-4">
+            <div><label class="block text-sm text-gray-600 mb-1">عنوان آگهی</label><input type="text" id="adTitle" required class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400"></div>
+            <div><label class="block text-sm text-gray-600 mb-1">قیمت (افغانی)</label><input type="number" id="adPrice" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400"></div>
+            <div><label class="block text-sm text-gray-600 mb-1">دسته‌بندی</label><select id="adCategory" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400"><option value="1">وسایل خانه</option><option value="2">الکترونیک</option><option value="3">خودرو</option><option value="4">املاک</option></select></div>
+            <div><label class="block text-sm text-gray-600 mb-1">توضیحات</label><textarea id="adDesc" required rows="4" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400"></textarea></div>
+            <button type="submit" class="w-full bg-red-500 text-white rounded-xl py-3 font-bold shadow-lg shadow-red-500/30">ثبت آگهی</button>
+        </form>
+    </main>
+    <main id="profilePage" class="hidden p-4 fade-in">
+        <div class="bg-white rounded-2xl p-6 shadow-sm text-center mb-6">
+            <div class="w-20 h-20 bg-red-100 text-red-500 rounded-full mx-auto flex items-center justify-center text-2xl font-bold mb-3" id="profileInitial">?</div>
+            <h2 class="font-bold text-lg" id="profileName">کاربر</h2>
+            <p class="text-sm text-gray-500 mt-1" id="profileStats">در حال بارگذاری...</p>
+        </div>
+        <h3 class="font-bold text-gray-700 mb-3">آگهی‌های من</h3>
+        <div id="myAdsList" class="space-y-3"></div>
+    </main>
+    <nav class="fixed bottom-0 left-0 w-full bg-white shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] border-t border-gray-100 flex justify-around py-2 z-50 rounded-t-2xl">
+        <button onclick="switchTab('home')" id="tab-home" class="flex flex-col items-center p-2 tab-active"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg><span class="text-xs mt-1">خانه</span></button>
+        <button onclick="switchTab('create')" id="tab-create" class="flex flex-col items-center p-2 tab-inactive"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg><span class="text-xs mt-1">ثبت آگهی</span></button>
+        <button onclick="switchTab('profile')" id="tab-profile" class="flex flex-col items-center p-2 tab-inactive"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg><span class="text-xs mt-1">پروفایل</span></button>
+    </nav>
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready(); tg.expand();
+        function switchTab(tab) {
+            ['home', 'create', 'profile'].forEach(t => { document.getElementById(`${t}Page`).classList.add('hidden'); document.getElementById(`tab-${t}`).classList.remove('tab-active'); document.getElementById(`tab-${t}`).classList.add('tab-inactive'); });
+            document.getElementById(`${tab}Page`).classList.remove('hidden'); document.getElementById(`tab-${tab}`).classList.add('tab-active'); document.getElementById(`tab-${tab}`).classList.remove('tab-inactive');
+            if (tab === 'home') loadAds(); if (tab === 'profile') loadProfile();
+        }
+        function toggleSearch() { document.getElementById('searchBox').classList.toggle('hidden'); }
+        async function callServerless(method, data = {}) { return new Promise((resolve, reject) => { tg.Serverless.call(method, data, (err, res) => { if (err) reject(err); else resolve(res); }); }); }
+        const categories = [{ id: 1, name: 'خانه', icon: '🏠' }, { id: 2, name: 'الکترونیک', icon: '📱' }, { id: 3, name: 'خودرو', icon: '🚗' }, { id: 4, name: 'املاک', icon: '🏢' }];
+        function renderCategories() { document.getElementById('categoriesGrid').innerHTML = categories.map(c => `<div class="bg-white p-3 rounded-xl shadow-sm text-center active:scale-95 transition" onclick="filterCategory(${c.id})"><div class="text-2xl mb-1">${c.icon}</div><div class="text-xs font-bold text-gray-700">${c.name}</div></div>`).join(''); }
+        async function loadAds(categoryId = null, searchText = null) {
+            const list = document.getElementById('adsList'); list.innerHTML = '<p class="text-center text-gray-500 py-4">در حال بارگذاری...</p>';
+            try {
+                const data = { limit: 10 }; if (categoryId) data.categoryId = categoryId; if (searchText) data.search = searchText;
+                const res = await callServerless('getAds', data);
+                if (res.ads.length === 0) { list.innerHTML = '<p class="text-center text-gray-500 py-4">هیچ آگهی یافت نشد.</p>'; return; }
+                list.innerHTML = res.ads.map(ad => `<div class="bg-white p-4 rounded-2xl shadow-sm flex items-center gap-4 active:scale-95 transition"><div class="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center text-2xl">${ad.categoryIcon}</div><div class="flex-1"><h3 class="font-bold text-gray-800 text-sm">${ad.title}</h3><p class="text-xs text-gray-500 mt-1">${ad.provinceName} • ${ad.categoryName}</p><p class="text-red-500 font-bold text-sm mt-2">${ad.price === 0 ? 'توافقی' : ad.price.toLocaleString() + ' افغانی'}</p></div></div>`).join('');
+            } catch (error) { list.innerHTML = '<p class="text-center text-red-500 py-4">خطا در دریافت اطلاعات!</p>'; console.error(error); }
+        }
+        function filterCategory(id) { switchTab('home'); loadAds(id); }
+        function searchAds() { const val = document.getElementById('searchInput').value; loadAds(null, val); }
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault(); const btn = e.target.querySelector('button'); btn.innerText = 'در حال ثبت...'; btn.disabled = true;
+            try {
+                const res = await callServerless('createAd', { title: document.getElementById('adTitle').value, price: parseInt(document.getElementById('adPrice').value) || 0, categoryId: parseInt(document.getElementById('adCategory').value), province: 'KBL', description: document.getElementById('adDesc').value });
+                if (res.success) { tg.showAlert('🎉 آگهی شما با موفقیت ثبت شد!'); e.target.reset(); switchTab('home'); }
+            } catch (err) { tg.showAlert('خطا در ثبت: ' + err.message); } finally { btn.innerText = 'ثبت آگهی'; btn.disabled = false; }
+        });
+        async function loadProfile() {
+            try {
+                const res = await callServerless('getProfile');
+                if (res.success && res.user) {
+                    document.getElementById('profileName').innerText = res.user.name; document.getElementById('profileInitial').innerText = res.user.name[0];
+                    document.getElementById('profileStats').innerHTML = `📋 ${res.user.totalAds} آگهی | 👥 ${res.user.invitedCount} دعوت`;
+                    const list = document.getElementById('myAdsList');
+                    if (res.ads.length === 0) { list.innerHTML = '<p class="text-center text-gray-500 text-sm">شما هنوز آگهی ثبت نکرده‌اید.</p>'; }
+                    else { list.innerHTML = res.ads.map(ad => `<div class="bg-white p-3 rounded-xl shadow-sm flex justify-between items-center"><div><h4 class="font-bold text-sm text-gray-800">${ad.title}</h4><p class="text-xs text-gray-500 mt-1">👁 ${ad.views} بازدید</p></div><span class="text-xs px-2 py-1 rounded-md ${ad.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${ad.status === 'active' ? 'فعال' : 'فروخته شده'}</span></div>`).join(''); }
+                }
+            } catch (error) { tg.showAlert('خطا در دریافت پروفایل'); }
+        }
+        renderCategories(); loadAds();
+    </script>
+</body>
+</html>
