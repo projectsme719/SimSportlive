@@ -2,26 +2,48 @@ export async function onRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
 
-  // ⚠️ آیدی اپلیکیشن تلگرام خود را اینجا وارد کنید
+  // ⚠️ اینجا باید آیدی اختصاصی ربات خودتان باشد!
+  // مثلاً app123456789
   const TELEGRAM_APP_ID = 'app8635372278'; 
   
-  // آدرس واقعی بک‌اند تلگرام
+  // ساخت آدرس مقصد در تلگرام
   const targetUrl = `https://${TELEGRAM_APP_ID}.tgcloud.ai${url.pathname}${url.search}`;
 
-  // فوروارد کردن درخواست به تلگرام
-  const newRequest = new Request(targetUrl, {
-    method: request.method,
-    headers: request.headers,
-    body: request.body
-  });
+  // اگر مرورگر درخواست OPTIONS فرستاد (برای تست CORS)
+  if (request.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+      }
+    });
+  }
 
-  // دریافت پاسخ از تلگرام
-  const response = await fetch(newRequest);
-  const newResponse = new Response(response.body, response);
-  
-  // تنظیم هدرهای امنیتی برای جلوگیری از خطای CORS
-  newResponse.headers.set('Access-Control-Allow-Origin', '*');
-  newResponse.headers.set('Access-Control-Allow-Headers', '*');
-  
-  return newResponse;
+  try {
+    // فوروارد درخواست
+    const newRequest = new Request(targetUrl, {
+      method: request.method,
+      headers: request.headers,
+      body: request.method !== 'GET' && request.method !== 'HEAD' ? await request.text() : null
+    });
+
+    const response = await fetch(newRequest);
+    const newResponse = new Response(response.body, response);
+    
+    // هدرهای امنیتی
+    newResponse.headers.set('Access-Control-Allow-Origin', '*');
+    return newResponse;
+
+  } catch (error) {
+    // اگر کلادفلر نتوانست به تلگرام وصل شود، این متن را برمی‌گرداند
+    return new Response(JSON.stringify({ 
+      error: "Proxy Error", 
+      details: error.message,
+      target: targetUrl
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 }
