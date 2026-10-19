@@ -300,6 +300,9 @@ body {
 if (window.Telegram && window.Telegram.WebApp) {
   window.Telegram.WebApp.ready();
   window.Telegram.WebApp.expand();
+  // اگر نیاز به دریافت اطلاعات کاربر بود:
+  const user = window.Telegram.WebApp.initDataUnsafe?.user;
+  if(user) console.log("User ID:", user.id, "Username:", user.username);
 }
 
 // باز کردن صفحه جزئیات آگهی
