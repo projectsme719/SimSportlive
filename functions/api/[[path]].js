@@ -4,7 +4,7 @@ export async function onRequest(context) {
 
   // ⚠️ اینجا باید آیدی اختصاصی ربات خودتان باشد!
   // مثلاً app123456789
-  const TELEGRAM_APP_ID = 'app8635372278'; 
+  const TELEGRAM_APP_ID = 'app8261477115'; 
   
   // ساخت آدرس مقصد در تلگرام
   const targetUrl = `https://${TELEGRAM_APP_ID}.tgcloud.ai${url.pathname}${url.search}`;
