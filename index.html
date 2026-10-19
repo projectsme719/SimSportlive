@@ -1,535 +1,299 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>دیوار | DivarAf</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
-    <style>
-        :root {
-            --bg: #e3e8ef;
-            --shadow-dark: #b9c1cf;
-            --shadow-light: #ffffff;
-            --icon: #8791a5;
-            --blue: #2f80ff;
-            --gold: #fcc419;
-            --gold-soft: #ffe066;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>دیوار | DivarAf</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet">
+<style>
+:root{--bg:#e3e8ef;--d:#b9c1cf;--l:#fff;--blue:#2f80ff;--red:#ef4444}
+body{font-family:Vazirmatn,sans-serif;background:var(--bg);color:#2d3748;padding-bottom:120px;user-select:none;-webkit-tap-highlight-color:transparent}
+::-webkit-scrollbar{display:none}
+.fade{animation:fd .3s}@keyframes fd{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.raise{background:var(--bg);box-shadow:6px 6px 13px var(--d),-6px -6px 13px var(--l)}
+.inset{background:var(--bg);box-shadow:inset 3px 3px 7px var(--d),inset -3px -3px 7px var(--l)}
+.in{background:var(--bg);box-shadow:inset 3px 3px 7px var(--d),inset -3px -3px 7px var(--l);border:0;border-radius:14px;padding:11px 14px;width:100%;outline:0;font:inherit;font-size:14px;color:inherit}
+.card{border-radius:20px}
+.pill{padding:7px 14px;border-radius:999px;font-size:12px;white-space:nowrap;color:#718096;border:0;font-family:inherit;background:var(--bg);box-shadow:3px 3px 7px var(--d),-3px -3px 7px var(--l)}
+.pill.on{color:var(--blue);font-weight:700;box-shadow:inset 2px 2px 5px var(--d),inset -2px -2px 5px var(--l)}
+.cat{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:5px 5px 11px var(--d),-5px -5px 11px var(--l)}
+.cat.on{box-shadow:inset 3px 3px 7px var(--d),inset -3px -3px 7px var(--l)}
+.badge{font-size:10px;padding:2px 8px;border-radius:8px;background:#fee2e2;color:#dc2626;white-space:nowrap}
+.btn{border:0;border-radius:16px;padding:12px;font-weight:700;font-size:14px;font-family:inherit;color:#4a5568}
+.pri{background:var(--red);color:#fff;box-shadow:0 8px 16px rgba(239,68,68,.3)}
+input[type=checkbox]{accent-color:var(--red);width:18px;height:18px;vertical-align:middle}
+.bg{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.35);z-index:60;display:flex;align-items:flex-end}
+.sheet{background:var(--bg);width:100%;max-height:88vh;overflow-y:auto;border-radius:28px 28px 0 0;padding:18px 16px 28px;animation:up .3s}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
 
-        body { font-family: 'Vazirmatn', sans-serif; background-color: var(--bg); user-select: none; -webkit-tap-highlight-color: transparent; }
-        ::-webkit-scrollbar { display: none; }
-        .fade-in { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* ---------- هدر و دسته‌بندی‌ها ---------- */
-        header.sticky { background: var(--bg) !important; box-shadow: 0 8px 18px -8px var(--shadow-dark) !important; }
-        header button {
-            width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%;
-            background: var(--bg); color: var(--icon);
-            box-shadow: 4px 4px 9px var(--shadow-dark), -4px -4px 9px var(--shadow-light);
-            transition: box-shadow .2s, color .2s;
-        }
-        header button:active { box-shadow: inset 3px 3px 7px var(--shadow-dark), inset -3px -3px 7px var(--shadow-light); color: var(--blue); }
-        #searchBox { background: var(--bg) !important; }
-        .category-circle {
-            width: 62px; height: 62px; display: flex; align-items: center; justify-content: center; border-radius: 50%;
-            background: var(--bg); font-size: 26px;
-            box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
-        }
-
-        /* ---------- bottom nav ---------- */
-        .nav-bar {
-            position: fixed; left: 0; right: 0; margin: 0 auto;
-            bottom: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-            width: 92%; max-width: 400px; box-sizing: border-box; padding: 12px 14px;
-            display: flex; flex-direction: row; align-items: center; justify-content: space-between;
-            background: #e3e8ef; border-radius: 34px; z-index: 50;
-            box-shadow: 14px 14px 28px #b9c1cf, -12px -12px 26px #ffffff;
-        }
-
-        .nav-btn {
-            position: relative; width: 58px; height: 58px; flex: 0 0 58px; margin: 0; padding: 0;
-            display: flex; align-items: center; justify-content: center;
-            -webkit-appearance: none; appearance: none; border: 0; border-radius: 50%;
-            background: #e3e8ef; color: #8791a5; cursor: pointer; outline: none;
-            box-shadow: 6px 6px 13px #b9c1cf, -6px -6px 13px #ffffff;
-            transition: color .3s, box-shadow .3s, transform .2s;
-        }
-        .nav-btn svg { position: relative; z-index: 3; width: 25px; height: 25px; display: block; transition: transform .3s; }
-        .nav-btn:active { transform: scale(.94); }
-
-        .nav-btn.tab-active { color: #2f80ff; font-weight: normal; }
-        .nav-btn.tab-inactive { color: #8791a5; }
-        .nav-btn::after {
-            content: ""; position: absolute; bottom: 7px; left: 26px; width: 6px; height: 6px;
-            border-radius: 50%; background: #2f80ff; z-index: 3;
-            opacity: 0; transform: scale(0); transition: opacity .3s, transform .3s;
-        }
-        .nav-btn.tab-active::after { opacity: 1; transform: scale(1); }
-        .nav-btn.tab-active svg { transform: translateY(-2px); }
-
-        /* water */
-        .water {
-            position: absolute; top: 0; right: 0; bottom: 0; left: 0;
-            border-radius: 50%; overflow: hidden; pointer-events: none; z-index: 1;
-            opacity: 0; transition: opacity .35s;
-            -webkit-mask-image: -webkit-radial-gradient(white, black);
-            -webkit-transform: translateZ(0); transform: translateZ(0);
-        }
-        .water::before {
-            content: ""; position: absolute; left: -50%; top: 108%;
-            width: 200%; height: 200%; border-radius: 41%;
-            background: linear-gradient(180deg, #ffe066, #fcc419);
-            transition: top 1s cubic-bezier(.3, .7, .3, 1);
-            animation: waveMove 2s linear infinite;
-        }
-        @keyframes waveMove { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .water i { position: absolute; bottom: -8px; width: 7px; height: 7px; border-radius: 50%; background: rgba(255,255,255,.75); opacity: 0; }
-        .water i:nth-child(1) { left: 22%; }
-        .water i:nth-child(2) { left: 52%; width: 5px; height: 5px; animation-delay: .4s !important; }
-        .water i:nth-child(3) { left: 72%; width: 6px; height: 6px; animation-delay: .8s !important; }
-        @keyframes bubbleUp { 0% { transform: translateY(0) scale(.6); opacity: 0; } 25% { opacity: .9; } 100% { transform: translateY(-46px) scale(1.1); opacity: 0; } }
-        .nav-btn:active .water, .nav-btn.splash .water { opacity: .95; }
-        .nav-btn:active .water::before, .nav-btn.splash .water::before { top: 22%; }
-        .nav-btn:active .water i, .nav-btn.splash .water i { animation: bubbleUp 1.2s ease-in infinite; }
-        .nav-btn:active, .nav-btn.splash {
-            color: #ffffff;
-            box-shadow: 0 0 22px rgba(252, 196, 25, .55), 6px 6px 13px #b9c1cf, -6px -6px 13px #ffffff;
-        }
-        .nav-btn:active::after, .nav-btn.splash::after { background: #ffffff; }
-        @media (prefers-reduced-motion: reduce) { .water::before, .water i { animation: none !important; } .nav-btn, .nav-btn svg, .water::before { transition: none; } }
-
-        /* استایل کارت آمار (نئومورفیک) */
-        .stat-card {
-            background: var(--bg);
-            box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-            border-radius: 16px; padding: 12px; text-align: center;
-        }
-    </style>
+/* bottom nav */
+.nav-bar{position:fixed;left:0;right:0;margin:0 auto;bottom:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:92%;max-width:400px;box-sizing:border-box;padding:11px 12px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;background:#e3e8ef;border-radius:34px;z-index:50;box-shadow:14px 14px 28px #b9c1cf,-12px -12px 26px #fff}
+.nav-btn{position:relative;width:52px;height:52px;flex:0 0 52px;margin:0;padding:0;display:flex;align-items:center;justify-content:center;-webkit-appearance:none;appearance:none;border:0;border-radius:50%;background:#e3e8ef;color:#8791a5;cursor:pointer;outline:none;box-shadow:6px 6px 13px #b9c1cf,-6px -6px 13px #fff;transition:color .3s,box-shadow .3s,transform .2s}
+.nav-btn svg{position:relative;z-index:3;width:24px;height:24px;display:block;transition:transform .3s}
+.nav-btn:active{transform:scale(.94)}
+.nav-btn.tab-active{color:#2f80ff}
+.nav-btn::after{content:"";position:absolute;bottom:6px;left:23px;width:6px;height:6px;border-radius:50%;background:#2f80ff;z-index:3;opacity:0;transform:scale(0);transition:opacity .3s,transform .3s}
+.nav-btn.tab-active::after{opacity:1;transform:scale(1)}
+.nav-btn.tab-active svg{transform:translateY(-2px)}
+.water{position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none;z-index:1;opacity:0;transition:opacity .35s;-webkit-mask-image:-webkit-radial-gradient(white,black);transform:translateZ(0)}
+.water::before{content:"";position:absolute;left:-50%;top:108%;width:200%;height:200%;border-radius:41%;background:linear-gradient(180deg,#ffe066,#fcc419);transition:top 1s cubic-bezier(.3,.7,.3,1);animation:wv 2s linear infinite}
+@keyframes wv{to{transform:rotate(360deg)}}
+.water i{position:absolute;bottom:-8px;width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.75);opacity:0}
+.water i:nth-child(1){left:22%}.water i:nth-child(2){left:52%;animation-delay:.4s!important}.water i:nth-child(3){left:72%;animation-delay:.8s!important}
+@keyframes bb{0%{transform:translateY(0);opacity:0}25%{opacity:.9}100%{transform:translateY(-44px);opacity:0}}
+.nav-btn:active .water,.nav-btn.splash .water{opacity:.95}
+.nav-btn:active .water::before,.nav-btn.splash .water::before{top:22%}
+.nav-btn:active .water i,.nav-btn.splash .water i{animation:bb 1.2s ease-in infinite}
+.nav-btn:active,.nav-btn.splash{color:#fff;box-shadow:0 0 22px rgba(252,196,25,.55),6px 6px 13px #b9c1cf,-6px -6px 13px #fff}
+.nav-btn:active::after,.nav-btn.splash::after{background:#fff}
+@media (prefers-reduced-motion:reduce){.water::before,.water i{animation:none!important}}
+</style>
 </head>
-<body class="pb-32 text-gray-800">
+<body>
 
-    <header class="bg-white shadow-sm sticky top-0 z-40 px-4 py-3 flex items-center justify-between">
-        <h1 class="text-xl font-bold text-gray-800">دیوار | DivarAf</h1>
-        <button onclick="toggleSearch()" aria-label="جستجو" class="p-2 text-gray-500 hover:bg-gray-100 rounded-full transition">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        </button>
-    </header>
+<header class="sticky top-0 z-40 px-4 pt-3 pb-3" style="background:var(--bg)">
+  <div class="flex items-center justify-between mb-3">
+    <h1 class="text-xl font-bold">دیوار | DivarAf</h1>
+    <button class="pill" id="provBtn" onclick="openFilters()">📍 همه ولایت‌ها</button>
+  </div>
+  <div class="flex gap-2">
+    <input id="q" class="in" placeholder="جستجو در اعلان‌ها..." oninput="F.q=this.value.trim();render()">
+    <button class="pill" style="flex:0 0 auto" onclick="openFilters()">⚙️ فیلتر<span id="fc"></span></button>
+  </div>
+</header>
 
-    <div id="searchBox" class="hidden bg-white px-4 pb-3 shadow-sm fade-in">
-        <div class="relative">
-            <input type="text" id="searchInput" placeholder="جستجو در اعلان‌ها..." class="w-full bg-gray-100 rounded-xl py-3 px-4 pr-10 outline-none focus:ring-2 focus:ring-red-400 transition">
-            <button onclick="searchAds()" class="absolute right-3 top-3 text-gray-500">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            </button>
-        </div>
+<main id="homePage" class="fade">
+  <div class="flex gap-4 overflow-x-auto px-4 py-3" id="cats"></div>
+  <div class="flex gap-2 overflow-x-auto px-4 pb-2" id="subs"></div>
+  <div class="flex gap-2 overflow-x-auto px-4 py-2" id="quick"></div>
+  <div class="flex items-center justify-between px-4 py-2">
+    <span class="text-xs text-gray-500" id="cnt"></span>
+    <select class="pill" onchange="F.sort=this.value;render()">
+      <option value="new">جدیدترین</option><option value="cheap">ارزان‌ترین</option><option value="exp">گران‌ترین</option>
+    </select>
+  </div>
+  <div id="list" class="px-4 space-y-3"></div>
+</main>
+
+<main id="createPage" class="hidden px-4 py-4 fade">
+  <h2 class="text-lg font-bold mb-4 text-center">ثبت اعلان جدید</h2>
+  <form id="cf" class="space-y-3">
+    <div class="flex gap-2 overflow-x-auto py-1">
+      <label class="raise card flex-shrink-0 w-20 h-20 flex items-center justify-center text-2xl">📷<input type="file" accept="image/*" multiple hidden onchange="addPh(this)"></label>
+      <div id="prev" class="flex gap-2"></div>
     </div>
+    <input id="fT" class="in" placeholder="عنوان اعلان" required>
+    <div class="grid grid-cols-2 gap-2"><select id="fC" class="in" onchange="fields()"></select><select id="fS" class="in"></select></div>
+    <div id="fDyn" class="grid grid-cols-2 gap-2"></div>
+    <select id="fP" class="in"></select>
+    <div class="raise card p-3 flex justify-between items-center"><span class="text-sm font-bold">قابل معاوضه است؟</span><input type="checkbox" id="fB" onchange="$('fPr').style.display=this.checked?'none':''"></div>
+    <input id="fPr" type="number" class="in" placeholder="قیمت (افغانی) — ۰ یعنی قابل مذاکره">
+    <input id="fPh" type="tel" class="in" placeholder="شماره تماس (اختیاری)">
+    <textarea id="fD" rows="4" class="in" placeholder="توضیحات" required></textarea>
+    <div class="raise card p-3 flex justify-between items-center"><span class="text-sm font-bold">⚡ نمایش با برچسب «فوری»</span><input type="checkbox" id="fU"></div>
+    <button type="submit" id="sb" class="btn pri w-full">ثبت اعلان</button>
+  </form>
+</main>
 
-    <main id="homePage" class="fade-in">
-        <div class="px-4 py-4">
-            <h2 class="text-sm font-bold text-gray-700 mb-3">دسته‌بندی‌ها</h2>
-            <div class="flex gap-4 overflow-x-auto pb-4 pt-1 px-1 hide-scroll" id="categoriesContainer"></div>
-        </div>
-        <div class="px-4 pb-4">
-            <h2 class="text-sm font-bold text-gray-700 mb-3">جدیدترین اعلان‌ها</h2>
-            <div id="adsList" class="space-y-3"><p class="text-center text-gray-500 py-4">در حال بارگذاری...</p></div>
-        </div>
-    </main>
+<main id="savedPage" class="hidden px-4 py-4 fade">
+  <div class="flex gap-2 mb-3"><button id="sv1" class="pill on" onclick="SV='fav';renderSaved()">❤️ نشان‌ها</button><button id="sv2" class="pill" onclick="SV='rec';renderSaved()">🕘 اخیراً دیده‌شده</button></div>
+  <div id="svList" class="space-y-3"></div>
+</main>
 
-    <main id="createPage" class="hidden px-4 py-4 fade-in">
-        <h2 class="text-lg font-bold mb-4 text-center">ثبت اعلان جدید</h2>
-        <form id="createForm" class="space-y-4">
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">بخش اصلی</label>
-                <select id="adCategory" onchange="handleCategoryChange()" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400">
-                    <option value="">انتخاب کنید...</option>
-                </select>
-            </div>
-            <div id="subCategoryDiv" class="hidden">
-                <label class="block text-sm text-gray-600 mb-1">زیربخش</label>
-                <select id="adSubCategory" onchange="renderDynamicFields()" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400"></select>
-            </div>
-            <div id="dynamicFieldsContainer" class="space-y-4"></div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">عنوان اعلان</label>
-                <input type="text" id="adTitle" required class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400">
-            </div>
-            <div class="bg-white p-3 rounded-xl shadow-sm flex items-center justify-between">
-                <span class="text-sm font-bold text-gray-700">قابل معاوضه است؟</span>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="adBarter" class="sr-only peer" onchange="togglePriceInput()">
-                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-red-500"></div>
-                </label>
-            </div>
-            <div id="priceContainer">
-                <label class="block text-sm text-gray-600 mb-1">قیمت (افغانی - 0 برای قابل مذاکره)</label>
-                <input type="number" id="adPrice" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400">
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">ولایت</label>
-                <select id="adProvince" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400"></select>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">شماره تماس (اختیاری)</label>
-                <input type="tel" id="adPhone" placeholder="مثلاً 0700123456" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400">
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">توضیحات</label>
-                <textarea id="adDesc" required rows="3" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400"></textarea>
-            </div>
-            <div>
-                <label class="block text-sm text-gray-600 mb-1">عکس اعلان (اختیاری)</label>
-                <input type="file" id="adImage" accept="image/*" class="w-full bg-white rounded-xl p-2 shadow-sm text-sm file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100">
-            </div>
-            <button type="submit" id="submitBtn" class="w-full bg-red-500 text-white rounded-xl py-3 font-bold shadow-lg shadow-red-500/30 active:scale-95 transition">ثبت اعلان</button>
-        </form>
-    </main>
+<main id="profilePage" class="hidden px-4 py-4 fade">
+  <div class="raise card p-6 text-center mb-5 flex flex-col items-center">
+    <img id="pImg" class="w-20 h-20 rounded-full mb-3 object-cover hidden">
+    <div id="pDef" class="w-20 h-20 inset rounded-full flex items-center justify-center text-2xl font-bold mb-3 text-red-500">?</div>
+    <h2 class="font-bold text-lg" id="pName">کاربر</h2>
+    <p class="text-sm text-gray-500 mt-1" id="pStats">...</p>
+  </div>
+  <h3 class="text-sm font-bold mb-3">مدیریت اعلان‌های من</h3>
+  <div id="myAds" class="space-y-3"></div>
+</main>
 
-    <!-- ⭐ صفحه پروفایل با کارت آمار جدید -->
-    <main id="profilePage" class="hidden px-4 py-4 fade-in">
-        <div class="bg-white rounded-2xl p-6 shadow-sm text-center mb-6 flex flex-col items-center relative overflow-hidden">
-            <img id="profileImg" src="" alt="Profile" class="w-20 h-20 rounded-full mb-3 object-cover border-2 border-red-500 hidden shadow-md">
-            <div id="profileDefaultImg" class="w-20 h-20 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-2xl font-bold mb-3 shadow-md">?</div>
-            <h2 class="font-bold text-lg" id="profileName">کاربر</h2>
-            
-            <!-- کارت‌های آمار -->
-            <div class="grid grid-cols-3 gap-3 w-full mt-4" id="statsContainer">
-                <!-- توسط جاوااسکریپت پر می‌شود -->
-            </div>
-        </div>
-        
-        <h3 class="text-sm font-bold text-gray-700 mb-3">مدیریت اعلان‌های فعال</h3>
-        <div id="myAdsList" class="space-y-3"></div>
-    </main>
+<div id="sh"></div>
 
-    <nav class="nav-bar" dir="ltr">
-        <button onclick="switchTab('home')" id="tab-home" aria-label="خانه" class="nav-btn tab-active" type="button">
-            <span class="water"><i></i><i></i><i></i></span>
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>
-        </button>
-        <button onclick="openSearch()" id="tab-search" aria-label="جستجو" class="nav-btn tab-inactive" type="button">
-            <span class="water"><i></i><i></i><i></i></span>
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
-        </button>
-        <button onclick="switchTab('create')" id="tab-create" aria-label="ثبت اعلان" class="nav-btn tab-inactive" type="button">
-            <span class="water"><i></i><i></i><i></i></span>
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-        </button>
-        <button onclick="switchTab('profile')" id="tab-profile" aria-label="پروفایل" class="nav-btn tab-inactive" type="button">
-            <span class="water"><i></i><i></i><i></i></span>
-            <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg>
-        </button>
-    </nav>
+<nav class="nav-bar" dir="ltr" style="position:fixed;left:0;right:0;bottom:14px;margin:0 auto;width:92%;max-width:400px;display:flex;flex-direction:row;align-items:center;justify-content:space-between">
+  <button type="button" onclick="switchTab('home')" id="tab-home" aria-label="خانه" class="nav-btn tab-active"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></button>
+  <button type="button" onclick="openSearch()" id="tab-search" aria-label="جستجو" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></button>
+  <button type="button" onclick="switchTab('create')" id="tab-create" aria-label="ثبت اعلان" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+  <button type="button" onclick="switchTab('saved')" id="tab-saved" aria-label="نشان‌ها" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.9c0 5.4-7.5 10-7.5 10z"/></svg></button>
+  <button type="button" onclick="switchTab('profile')" id="tab-profile" aria-label="پروفایل" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></button>
+</nav>
 
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready(); tg.expand();
-        const tgUser = tg.initDataUnsafe.user;
+<script>
+const $=id=>document.getElementById(id);
+const tg=(window.Telegram&&Telegram.WebApp)||{ready(){},expand(){},initDataUnsafe:{}};
+tg.ready();tg.expand();
+const tu=tg.initDataUnsafe.user||{};
+const say=m=>(tg.showAlert&&tg.initData)?tg.showAlert(m):alert(m);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fa=n=>(+n||0).toLocaleString('fa');
+const ls=(k,d)=>{try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}};
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 
-        if (tgUser && tgUser.photo_url) {
-            document.getElementById('profileImg').src = tgUser.photo_url;
-            document.getElementById('profileImg').classList.remove('hidden');
-            document.getElementById('profileDefaultImg').classList.add('hidden');
-        } else if (tgUser && tgUser.first_name) {
-            document.getElementById('profileDefaultImg').innerText = tgUser.first_name[0];
-        }
+/* ---- data ---- */
+const sel=(k,l,o)=>({k,l,t:'s',o}),num=(k,l)=>({k,l,t:'n'}),COND=sel('cond','وضعیت',['نو','در حد نو','کارکرده']);
+const CATS=[
+{id:1,n:'لوازم خانه',i:'🏠',s:['مبلمان','لوازم برقی','فرش و گلیم','ظروف'],f:[COND]},
+{id:2,n:'الکترونیک',i:'📱',s:['موبایل','لپ‌تاپ','تلویزیون','کنسول بازی','لوازم جانبی'],f:[COND]},
+{id:3,n:'وسایل نقلیه',i:'🚗',s:['سواری','موتورسایکل','باربری','لوازم یدکی'],f:[num('year','سال ساخت'),num('km','کارکرد (کیلومتر)'),sel('gear','گیربکس',['اتومات','دنده‌ای'])]},
+{id:4,n:'املاک',i:'🏢',s:['فروش خانه','رهن و اجاره','زمین','دکان و مغازه'],f:[num('area','متراژ'),num('rooms','تعداد اتاق'),sel('park','پارکینگ',['دارد','ندارد'])]},
+{id:5,n:'خدمات',i:'🛠️',s:['ساختمانی','حمل و نقل','آموزشی','تعمیرات'],f:[]},
+{id:6,n:'حیوانات',i:'🐾',s:['پرنده','گوسفند و بز','گربه و سگ','خوراک'],f:[num('age','سن (ماه)')]},
+{id:7,n:'وسایل شخصی',i:'👕',s:['لباس','کفش','ساعت و زیورآلات','کیف'],f:[COND]},
+{id:8,n:'کتاب و آموزش',i:'📚',s:['کتاب','کورس‌ها','لوازم تحریر'],f:[]},
+{id:9,n:'کار و استخدام',i:'💼',s:['تمام‌وقت','نیمه‌وقت','دورکاری'],f:[sel('role','نوع',['کارفرما','کارجو']),num('salary','حقوق ماهانه')]},
+{id:10,n:'سایر',i:'📦',s:[],f:[]}];
+const PROV=[['KBL','کابل'],['HRT','هرات'],['BLK','بلخ'],['KDZ','کندز'],['BDG','بادغیس'],['BGL','بغلان'],['BAM','بامیان'],['DAY','دایکندی'],['FRA','فراه'],['FYB','فاریاب'],['GHA','غزنی'],['GHO','غور'],['HEL','هلمند'],['JOW','جوزجان'],['KAN','قندهار'],['KAP','کاپیسا'],['KHO','خوست'],['KNR','کنر'],['LAG','لغمان'],['LOG','لوگر'],['NAN','ننگرهار'],['NIM','نیمروز'],['NUR','نورستان'],['ORU','اروزگان'],['PAN','پنجشیر'],['PAR','پروان'],['PIA','پکتیا'],['PKA','پکتیکا'],['SAM','سمنگان'],['SAR','سرپل'],['TAK','تخار'],['WAR','میدان وردک'],['ZAB','زابل'],['BDS','بدخشان']];
+const cat=id=>CATS.find(c=>c.id==id)||{id:0,n:'همه',i:'🧭',s:[],f:[]};
+const provName=c=>(PROV.find(p=>p[0]===c)||[0,c||'—'])[1];
+const ph=e=>'data:image/svg+xml,'+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#e3e8ef'/><text x='50' y='66' font-size='48' text-anchor='middle'>"+e+"</text></svg>");
+const ago=t=>{const m=(Date.now()-t)/6e4;return m<2?'لحظاتی پیش':m<60?fa(~~m)+' دقیقه پیش':m<1440?fa(~~(m/60))+' ساعت پیش':fa(~~(m/1440))+' روز پیش'};
+const priceTxt=a=>a.barter?'🔄 معاوضه':a.price?fa(a.price)+' افغانی':'قابل مذاکره';
 
-        const CATEGORIES = [
-            { id: 1, name: 'لوازم خانه', icon: '🏠', fields: [{ key: 'itemType', label: 'نوع وسیله', type: 'text' }, { key: 'condition', label: 'وضعیت', type: 'select', options: ['نو', 'در حد نو', 'کارکرده'] }] },
-            { id: 2, name: 'الکترونیک', icon: '📱', subcategories: [
-                { id: 21, name: 'تلفن همراه', fields: [{ key: 'brand', label: 'برند', type: 'text' }, { key: 'model', label: 'مدل', type: 'text' }, { key: 'ram', label: 'رم', type: 'text' }, { key: 'storage', label: 'حافظه', type: 'text' }, { key: 'condition', label: 'وضعیت', type: 'select', options: ['نو', 'در حد نو', 'کارکرده'] }] },
-                { id: 28, name: 'تلویزیون', fields: [{ key: 'brand', label: 'برند', type: 'text' }, { key: 'size', label: 'سایز (اینچ)', type: 'number' }, { key: 'condition', label: 'وضعیت', type: 'select', options: ['نو', 'در حد نو', 'کارکرده'] }] }
-            ], fields: [] },
-            { id: 3, name: 'وسایل نقلیه', icon: '🚗', subcategories: [
-                { id: 31, name: 'موتر', fields: [{ key: 'brand', label: 'برند', type: 'text' }, { key: 'model', label: 'مدل', type: 'text' }, { key: 'year', label: 'سال ساخت', type: 'number' }, { key: 'condition', label: 'وضعیت', type: 'select', options: ['نو', 'در حد نو', 'کارکرده'] }] },
-                { id: 32, name: 'موتورسایکل', fields: [{ key: 'brand', label: 'برند', type: 'text' }, { key: 'model', label: 'مدل', type: 'text' }, { key: 'condition', label: 'وضعیت', type: 'select', options: ['نو', 'در حد نو', 'کارکرده'] }] }
-            ], fields: [] },
-            { id: 4, name: 'املاک', icon: '🏢', fields: [{ key: 'area', label: 'مساحت', type: 'number' }, { key: 'rooms', label: 'تعداد اتاق', type: 'number' }, { key: 'condition', label: 'وضعیت', type: 'select', options: ['نوساز', 'در حد نو', 'نیاز به تعمیر'] }] },
-            { id: 5, name: 'خدمات', icon: '🛠️', fields: [{ key: 'serviceType', label: 'نوع خدمت', type: 'text' }] }
-        ];
+/* ---- backend: Telegram Serverless if present, otherwise local demo store ---- */
+const LOCAL=!(tg.Serverless&&tg.Serverless.call),K='divaraf_ads';
+const seed=()=>{const t=Date.now(),H=36e5;return [
+['مبل ۷ نفره کاملاً نو',1,'مبلمان',18000,'KBL',{cond:'نو'},0,0,'🛋️',2],
+['آیفون ۱۳ با کارتن',2,'موبایل',32000,'HRT',{cond:'در حد نو'},1,0,'📱',5],
+['تویوتا کرولا ۲۰۱۲',3,'سواری',650000,'KAN',{year:2012,km:140000,gear:'اتومات'},0,0,'🚗',20],
+['آپارتمان ۳ اتاقه',4,'فروش خانه',4500000,'KBL',{area:110,rooms:3,park:'دارد'},0,0,'🏢',30],
+['تدریس خصوصی انگلیسی',5,'آموزشی',0,'BLK',{},0,0,'',48],
+['جفت کبوتر زینتی',6,'پرنده',0,'NAN',{age:8},0,1,'🕊️',70],
+['کتاب‌های کانکور (معاوضه)',8,'کتاب',0,'HRT',{},0,1,'📚',90],
+['استخدام حسابدار',9,'تمام‌وقت',25000,'KBL',{role:'کارفرما',salary:25000},1,0,'💼',3]
+].map((r,i)=>({id:i+1,title:r[0],cat:r[1],sub:r[2],price:r[3],prov:r[4],a:r[5],urgent:r[6],barter:r[7],imgs:r[8]?[ph(r[8])]:[],desc:'آگهی نمونه برای نمایش. برای جزئیات بیشتر تماس بگیرید.',ts:t-r[9]*H,views:0,status:'active',phone:'0700000000'}))};
+async function api(m,d={}){
+  if(!LOCAL)return new Promise((ok,no)=>tg.Serverless.call(m,d,(e,r)=>e?no(e):ok(r)));
+  let L=ls(K,null);if(!L){L=seed();sv(K,L)}
+  if(m==='getAds')return{ads:L};
+  if(m==='createAd'){L.unshift({...d,id:Date.now(),ts:Date.now(),status:'active',views:0,mine:1});sv(K,L);return{success:true}}
+  if(m==='getProfile'){const my=L.filter(a=>a.mine&&a.status!=='deleted');return{success:true,user:{name:tu.first_name||'کاربر',totalAds:my.length},ads:my}}
+  const x=L.find(a=>a.id==d.adId);
+  if(x){if(m==='updateAdStatus')x.status=d.status;if(m==='deleteAd')x.status='deleted';if(m==='bumpAd')x.up=Date.now();sv(K,L)}
+  return{success:true};
+}
+const norm=a=>({...a,cat:a.cat||a.categoryId,prov:a.prov||a.province,desc:a.desc||a.description||'',barter:a.barter!=null?a.barter:a.isBarter,imgs:a.imgs||[],a:a.a||{},ts:a.ts||Date.parse(a.createdAt)||0,views:a.views||0,status:a.status||'active'});
 
-        const PROVINCES = [
-            { code: 'KBL', name: 'کابل' }, { code: 'HRT', name: 'هرات' }, { code: 'BLK', name: 'بلخ' }, { code: 'KDZ', name: 'کندز' },
-            { code: 'BDG', name: 'بادغیس' }, { code: 'BGL', name: 'بغلان' }, { code: 'BAM', name: 'بامیان' }, { code: 'DAY', name: 'دایکندی' },
-            { code: 'FRA', name: 'فراه' }, { code: 'FYB', name: 'فاریاب' }, { code: 'GHA', name: 'غزنی' }, { code: 'GHO', name: 'غور' },
-            { code: 'HEL', name: 'هلمند' }, { code: 'JOW', name: 'جوزجان' }, { code: 'KAN', name: 'قندهار' }, { code: 'KAP', name: 'کاپیسا' },
-            { code: 'KHO', name: 'خوست' }, { code: 'KNR', name: 'کنر' }, { code: 'LAG', name: 'لغمان' }, { code: 'LOG', name: 'لوگر' },
-            { code: 'NAN', name: 'ننگرهار' }, { code: 'NIM', name: 'نیمروز' }, { code: 'NUR', name: 'نورستان' }, { code: 'ORU', name: 'اروزگان' },
-            { code: 'PAN', name: 'پنجشیر' }, { code: 'PAR', name: 'پروان' }, { code: 'PIA', name: 'پکتیا' }, { code: 'PKA', name: 'پکتیکا' },
-            { code: 'SAM', name: 'سمنگان' }, { code: 'SAR', name: 'سرپل' }, { code: 'TAK', name: 'تخار' }, { code: 'WAR', name: 'میدان وردک' },
-            { code: 'ZAB', name: 'زابل' }, { code: 'URZ', name: 'اورزگان' }
-        ];
+/* ---- state & filtering ---- */
+let ADS=[],F={q:'',cat:0,sub:'',prov:'',pmin:'',pmax:'',photo:0,urgent:0,barter:0,sort:'new',a:{}},SV='fav',PH=[];
+const favs=()=>ls('dv_fav',[]),recs=()=>ls('dv_rec',[]),isFav=id=>favs().includes(id);
+function applyF(L){return L.filter(a=>{
+  if(a.status!=='active')return 0;
+  if(F.cat&&a.cat!=F.cat)return 0;if(F.sub&&a.sub!==F.sub)return 0;if(F.prov&&a.prov!==F.prov)return 0;
+  if(F.q&&!((a.title+' '+a.desc).includes(F.q)))return 0;
+  if(F.photo&&!a.imgs.length)return 0;if(F.urgent&&!a.urgent)return 0;if(F.barter&&!a.barter)return 0;
+  if(F.pmin!==''&&!(a.price>=+F.pmin))return 0;if(F.pmax!==''&&!(a.price>0&&a.price<=+F.pmax))return 0;
+  for(const k in F.a){const v=F.a[k];
+    if(k.endsWith('_min')){if(!(+a.a[k.slice(0,-4)]>=+v))return 0}
+    else if(k.endsWith('_max')){if(!(+a.a[k.slice(0,-4)]<=+v))return 0}
+    else if(a.a[k]!=v)return 0}
+  return 1})}
+const sortL=L=>L.sort(F.sort==='cheap'?(a,b)=>a.price-b.price:F.sort==='exp'?(a,b)=>b.price-a.price:(a,b)=>(b.up||b.ts)-(a.up||a.ts));
+const nActive=()=>[F.prov,F.pmin,F.pmax,F.photo,F.urgent,F.barter].filter(x=>x!==''&&x!==0).length+Object.keys(F.a).length;
 
-        function init() {
-            renderCategories();
-            populateSelects();
-            loadAds();
-            initNavWater();
-        }
+/* ---- rendering ---- */
+const card=a=>`<div class="raise card p-3 flex gap-3 active:scale-[.98] transition" onclick="openAd(${a.id})">
+<div class="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center text-3xl inset">${a.imgs[0]?`<img src="${a.imgs[0]}" class="w-full h-full object-cover">`:cat(a.cat).i}</div>
+<div class="flex-1 min-w-0"><div class="flex gap-1 items-center">${a.urgent?'<span class="badge">فوری</span>':''}<h3 class="font-bold text-sm truncate">${esc(a.title)}</h3></div>
+<p class="text-red-500 font-bold text-sm mt-1">${priceTxt(a)}</p>
+<p class="text-xs text-gray-500 mt-2 truncate">${ago(a.up||a.ts)} در ${provName(a.prov)} ${a.imgs.length?'📷':''}</p></div>
+<button class="self-start text-lg" onclick="event.stopPropagation();fav(${a.id})">${isFav(a.id)?'❤️':'🤍'}</button></div>`;
+function render(){
+  const L=sortL(applyF(ADS));
+  $('list').innerHTML=L.length?L.map(card).join(''):'<p class="text-center text-gray-500 py-8">هیچ اعلانی یافت نشد.</p>';
+  $('cnt').textContent=fa(L.length)+' اعلان';
+  $('cats').innerHTML=[cat(0),...CATS].map(c=>`<div class="flex flex-col items-center gap-2 flex-shrink-0" onclick="setCat(${c.id})"><div class="cat raise ${F.cat==c.id?'on':''}">${c.i}</div><span class="text-xs whitespace-nowrap ${F.cat==c.id?'font-bold':'text-gray-600'}">${c.n}</span></div>`).join('');
+  $('subs').innerHTML=cat(F.cat).s.map(s=>`<button class="pill ${F.sub===s?'on':''}" onclick="F.sub=F.sub==='${s}'?'':'${s}';render()">${s}</button>`).join('');
+  $('quick').innerHTML=[['photo','📷 عکس‌دار'],['urgent','⚡ فوری'],['barter','🔄 معاوضه']].map(([k,l])=>`<button class="pill ${F[k]?'on':''}" onclick="F.${k}=F.${k}?0:1;render()">${l}</button>`).join('');
+  const n=nActive();$('fc').textContent=n?' ('+fa(n)+')':'';
+  $('provBtn').textContent='📍 '+(F.prov?provName(F.prov):'همه ولایت‌ها');
+}
+const setCat=id=>{F.cat=id;F.sub='';F.a={};render()};
+async function load(){try{const r=await api('getAds',{limit:100});ADS=(r.ads||[]).map(norm)}catch(e){ADS=[]}render()}
 
-        function initNavWater() {
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    btn.classList.add('splash');
-                    clearTimeout(btn._t);
-                    btn._t = setTimeout(() => btn.classList.remove('splash'), 1400);
-                });
-            });
-        }
+/* ---- sheets ---- */
+const sheet=h=>{$('sh').innerHTML=`<div class="bg" onclick="if(event.target===this)closeSheet()"><div class="sheet" id="shb"><div class="mx-auto w-10 h-1 rounded bg-gray-300 mb-3"></div>${h}</div></div>`};
+const closeSheet=()=>{$('sh').innerHTML=''};
+function openFilters(){const c=cat(F.cat);
+  sheet(`<h3 class="font-bold mb-3">فیلترها</h3><div class="space-y-3">
+  <select id="xProv" class="in"><option value="">همه ولایت‌ها</option>${PROV.map(p=>`<option value="${p[0]}" ${F.prov===p[0]?'selected':''}>${p[1]}</option>`).join('')}</select>
+  <div class="grid grid-cols-2 gap-2"><input id="xMin" type="number" class="in" placeholder="حداقل قیمت" value="${F.pmin}"><input id="xMax" type="number" class="in" placeholder="حداکثر قیمت" value="${F.pmax}"></div>
+  ${c.id?`<p class="text-xs text-gray-500">فیلترهای «${c.n}»</p><div class="grid grid-cols-2 gap-2">${c.f.map(f=>f.t==='s'?`<select class="in" data-k="${f.k}"><option value="">${f.l}: همه</option>${f.o.map(o=>`<option ${F.a[f.k]===o?'selected':''}>${o}</option>`).join('')}</select>`:`<input type="number" class="in" data-k="${f.k}_min" placeholder="${f.l} از" value="${F.a[f.k+'_min']||''}"><input type="number" class="in" data-k="${f.k}_max" placeholder="${f.l} تا" value="${F.a[f.k+'_max']||''}">`).join('')}</div>`:'<p class="text-xs text-gray-500">برای فیلترهای تخصصی (متراژ، سال ساخت، کارکرد و...) ابتدا یک دسته انتخاب کنید.</p>'}
+  <div class="flex gap-4 text-sm flex-wrap"><label><input type="checkbox" id="xPh" ${F.photo?'checked':''}> عکس‌دار</label><label><input type="checkbox" id="xUr" ${F.urgent?'checked':''}> فوری</label><label><input type="checkbox" id="xBa" ${F.barter?'checked':''}> معاوضه</label></div>
+  <div class="flex gap-2"><button class="btn pri flex-1" onclick="applyFilters()">نمایش نتایج</button><button class="btn raise" onclick="resetF()">حذف فیلترها</button></div></div>`)}
+function applyFilters(){F.prov=$('xProv').value;F.pmin=$('xMin').value;F.pmax=$('xMax').value;F.photo=$('xPh').checked?1:0;F.urgent=$('xUr').checked?1:0;F.barter=$('xBa').checked?1:0;
+  F.a={};document.querySelectorAll('#shb [data-k]').forEach(e=>{if(e.value!=='')F.a[e.dataset.k]=e.value});closeSheet();render()}
+function resetF(){F={...F,prov:'',pmin:'',pmax:'',photo:0,urgent:0,barter:0,a:{}};closeSheet();render()}
 
-        function renderCategories() {
-            document.getElementById('categoriesContainer').innerHTML = CATEGORIES.map(c => `
-                <div class="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition" onclick="filterCategory(${c.id})">
-                    <div class="category-circle">${c.icon}</div>
-                    <span class="text-xs text-gray-600 whitespace-nowrap">${c.name}</span>
-                </div>
-            `).join('');
-        }
+function openAd(id){const a=ADS.find(x=>x.id==id);if(!a)return;
+  const r=recs().filter(x=>x!==id);r.unshift(id);sv('dv_rec',r.slice(0,20));
+  if(LOCAL){const L=ls(K,[]),x=L.find(y=>y.id==id);if(x){x.views=(x.views||0)+1;sv(K,L);a.views=x.views}}
+  const c=cat(a.cat),fl=c.f.filter(f=>a.a[f.k]!=null&&a.a[f.k]!=='');
+  sheet(`<div class="flex gap-2 overflow-x-auto mb-3">${a.imgs.map(s=>`<img src="${s}" class="h-56 rounded-2xl flex-shrink-0 object-cover">`).join('')||`<div class="inset w-full h-36 rounded-2xl flex items-center justify-center text-6xl">${c.i}</div>`}</div>
+  <h2 class="font-bold text-lg">${a.urgent?'<span class="badge">فوری</span> ':''}${esc(a.title)}</h2>
+  <p class="text-xs text-gray-500 mt-1">${ago(a.up||a.ts)} در ${provName(a.prov)} • ${c.n}${a.sub?' › '+esc(a.sub):''} • 👁 ${fa(a.views)}</p>
+  <p class="text-red-500 font-bold text-lg my-3">${priceTxt(a)}</p>
+  ${fl.length?`<div class="raise card p-3 mb-3 grid grid-cols-2 gap-2 text-sm">${fl.map(f=>`<div><span class="text-gray-500 text-xs">${f.l}</span><br><b>${esc(a.a[f.k])}</b></div>`).join('')}</div>`:''}
+  <p class="text-sm leading-7 mb-3">${esc(a.desc).replace(/\n/g,'<br>')}</p>
+  <textarea class="in mb-3" rows="2" placeholder="📝 یادداشت شخصی (فقط برای شما)" oninput="note(${a.id},this.value)">${esc(ls('dv_note',{})[a.id]||'')}</textarea>
+  <div class="flex gap-2"><button class="btn pri flex-1" onclick="contact(${a.id})">📞 تماس</button><button class="btn raise" onclick="fav(${a.id},1)">${isFav(a.id)?'❤️':'🤍'}</button><button class="btn raise" onclick="share(${a.id})">🔗</button><button class="btn raise" onclick="say('گزارش شما ثبت شد')">🚩</button></div>`);
+  render()}
+const note=(id,v)=>{const n=ls('dv_note',{});n[id]=v;sv('dv_note',n)};
+const contact=id=>{const a=ADS.find(x=>x.id==id);a&&a.phone?location.href='tel:'+a.phone:say('فروشنده شماره‌ای ثبت نکرده است.')};
+function share(id){const a=ADS.find(x=>x.id==id),t=a.title+' — '+priceTxt(a);
+  if(navigator.share)navigator.share({title:t,url:location.href}).catch(()=>{});else{navigator.clipboard&&navigator.clipboard.writeText(t+' '+location.href);say('کپی شد')}}
+function fav(id,reopen){let f=favs();f=f.includes(id)?f.filter(x=>x!==id):[id,...f];sv('dv_fav',f);render();renderSaved();if(reopen)openAd(id)}
 
-        function populateSelects() {
-            document.getElementById('adCategory').innerHTML = '<option value="">انتخاب کنید...</option>' + CATEGORIES.map(c => `<option value="${c.id}">${c.icon} ${c.name}</option>`).join('');
-            document.getElementById('adProvince').innerHTML = PROVINCES.map(p => `<option value="${p.code}">${p.name}</option>`).join('');
-        }
+/* ---- tabs ---- */
+function switchTab(t){
+  ['home','create','saved','profile'].forEach(x=>{$(x+'Page').classList.add('hidden');$('tab-'+x).classList.remove('tab-active')});
+  $(t+'Page').classList.remove('hidden');$('tab-'+t).classList.add('tab-active');
+  $('q').parentNode.parentNode.style.display=t==='home'?'':'none';
+  if(t==='home')load();if(t==='saved')renderSaved();if(t==='profile')loadProfile();
+}
+function openSearch(){switchTab('home');$('q').focus();scrollTo({top:0,behavior:'smooth'})}
+function renderSaved(){
+  $('sv1').className='pill '+(SV==='fav'?'on':'');$('sv2').className='pill '+(SV==='rec'?'on':'');
+  const L=(SV==='fav'?favs():recs()).map(id=>ADS.find(a=>a.id==id)).filter(Boolean);
+  $('svList').innerHTML=L.length?L.map(card).join(''):'<p class="text-center text-gray-500 py-8">موردی وجود ندارد.</p>'}
 
-        function handleCategoryChange() {
-            const catId = parseInt(document.getElementById('adCategory').value);
-            const cat = CATEGORIES.find(c => c.id === catId);
-            const subDiv = document.getElementById('subCategoryDiv');
-            const subSelect = document.getElementById('adSubCategory');
-            const dynamicContainer = document.getElementById('dynamicFieldsContainer');
-            dynamicContainer.innerHTML = '';
+/* ---- create ad ---- */
+function fields(){const c=cat($('fC').value);
+  $('fS').innerHTML=c.s.length?c.s.map(s=>`<option>${s}</option>`).join(''):'<option value="">—</option>';
+  $('fDyn').innerHTML=c.f.map(f=>f.t==='s'?`<select class="in" data-k="${f.k}"><option value="">${f.l}</option>${f.o.map(o=>`<option>${o}</option>`).join('')}</select>`:`<input type="number" class="in" data-k="${f.k}" placeholder="${f.l}">`).join('')}
+function prev(){$('prev').innerHTML=PH.map((s,i)=>`<div class="relative flex-shrink-0"><img src="${s}" class="w-20 h-20 rounded-2xl object-cover"><button type="button" class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 text-xs" onclick="PH.splice(${i},1);prev()">×</button></div>`).join('')}
+function addPh(inp){[...inp.files].slice(0,5-PH.length).forEach(f=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,720/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*k;c.height=im.height*k;c.getContext('2d').drawImage(im,0,0,c.width,c.height);PH.push(c.toDataURL('image/jpeg',.7));prev()};im.src=r.result};r.readAsDataURL(f)});inp.value=''}
+$('cf').onsubmit=async e=>{e.preventDefault();const b=$('sb');b.disabled=true;b.textContent='در حال ثبت...';
+  try{const cid=+$('fC').value,bar=$('fB').checked,a={};
+    document.querySelectorAll('#fDyn [data-k]').forEach(x=>{if(x.value!=='')a[x.dataset.k]=x.value});
+    const ad={title:$('fT').value.trim(),cat:cid,sub:$('fS').value,prov:$('fP').value,desc:$('fD').value.trim(),price:bar?0:(parseInt($('fPr').value)||0),barter:bar,urgent:$('fU').checked?1:0,phone:$('fPh').value.trim(),imgs:PH,a};
+    const r=await api('createAd',{...ad,categoryId:cid,province:ad.prov,description:ad.desc,isBarter:bar});
+    if(r&&r.success){say('🎉 اعلان شما ثبت شد!');e.target.reset();PH=[];prev();fields();$('fPr').style.display='';switchTab('home')}
+  }catch(err){say('خطا در ثبت: '+(err.message||'ارتباط برقرار نشد'))}
+  finally{b.disabled=false;b.textContent='ثبت اعلان'}};
 
-            if (cat && cat.subcategories && cat.subcategories.length > 0) {
-                subDiv.classList.remove('hidden');
-                subSelect.innerHTML = '<option value="">انتخاب کنید...</option>' + cat.subcategories.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-            } else {
-                subDiv.classList.add('hidden');
-                renderDynamicFields();
-            }
-        }
+/* ---- profile ---- */
+const ST={active:'فعال',sold:'فروخته شده',deleted:'حذف شده'};
+async function loadProfile(){try{const r=await api('getProfile');if(!r||!r.user)return;
+  $('pName').textContent=r.user.name||'کاربر';$('pStats').textContent=`📋 ${fa(r.user.totalAds)} اعلان | ❤️ ${fa(favs().length)} نشان`;
+  const L=(r.ads||[]).map(norm);
+  $('myAds').innerHTML=L.length?L.map(a=>`<div class="raise card p-4"><div class="flex justify-between items-center"><div><h4 class="font-bold text-sm">${esc(a.title)}</h4><p class="text-xs text-gray-500 mt-1">👁 ${fa(a.views)} بازدید • ${ST[a.status]||a.status}</p></div></div>
+  ${a.status==='active'?`<div class="flex gap-2 mt-3 text-xs"><button class="btn raise flex-1" onclick="upd(${a.id},'sold')">فروخته شد</button>${LOCAL?`<button class="btn raise flex-1" onclick="upd(${a.id},'bump')">⬆️ نردبان</button>`:''}<button class="btn flex-1" style="color:#dc2626" onclick="upd(${a.id},'del')">حذف</button></div>`:''}</div>`).join(''):'<p class="text-center text-gray-500 text-sm py-4">هنوز اعلانی ثبت نکرده‌اید.</p>'
+}catch(e){say('خطا در دریافت پروفایل!')}}
+async function upd(id,w){if(w!=='bump'&&!confirm('آیا مطمئن هستید؟'))return;
+  try{await api(w==='sold'?'updateAdStatus':w==='del'?'deleteAd':'bumpAd',w==='sold'?{adId:id,status:'sold'}:{adId:id});await load();loadProfile()}catch(e){say('خطا: '+e.message)}}
 
-        function renderDynamicFields() {
-            const catId = parseInt(document.getElementById('adCategory').value);
-            const subId = document.getElementById('adSubCategory').value ? parseInt(document.getElementById('adSubCategory').value) : null;
-            let fields = [];
-            if (subId) {
-                const parentCat = CATEGORIES.find(c => c.id === catId);
-                fields = parentCat.subcategories.find(s => s.id === subId).fields || [];
-            } else {
-                const cat = CATEGORIES.find(c => c.id === catId);
-                fields = cat ? (cat.fields || []) : [];
-            }
-
-            document.getElementById('dynamicFieldsContainer').innerHTML = fields.map(f => {
-                if (f.type === 'select') {
-                    return `<div><label class="block text-sm text-gray-600 mb-1">${f.label}</label><select id="field_${f.key}" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400"><option value="">انتخاب کنید...</option>${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select></div>`;
-                } else {
-                    return `<div><label class="block text-sm text-gray-600 mb-1">${f.label}</label><input type="${f.type}" id="field_${f.key}" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400"></div>`;
-                }
-            }).join('');
-        }
-
-        function switchTab(tab) {
-            ['home', 'create', 'profile'].forEach(t => {
-                document.getElementById(`${t}Page`).classList.add('hidden');
-                document.getElementById(`tab-${t}`).classList.remove('tab-active');
-                document.getElementById(`tab-${t}`).classList.add('tab-inactive');
-            });
-            document.getElementById(`${tab}Page`).classList.remove('hidden');
-            document.getElementById(`tab-${tab}`).classList.add('tab-active');
-            document.getElementById(`tab-${tab}`).classList.remove('tab-inactive');
-            if (tab === 'home') loadAds();
-            if (tab === 'profile') loadProfile();
-        }
-
-        function toggleSearch() { document.getElementById('searchBox').classList.toggle('hidden'); }
-        function openSearch() { switchTab('home'); document.getElementById('searchBox').classList.remove('hidden'); document.getElementById('searchInput').focus(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-        function togglePriceInput() { document.getElementById('priceContainer').style.display = document.getElementById('adBarter').checked ? 'none' : 'block'; }
-
-        async function callServerless(method, data = {}) {
-            return new Promise((resolve, reject) => {
-                tg.Serverless.call(method, data, (err, res) => { if (err) reject(err); else resolve(res); });
-            });
-        }
-
-        async function loadAds(categoryId = null, searchText = null) {
-            const list = document.getElementById('adsList');
-            list.innerHTML = '<p class="text-center text-gray-500 py-4">در حال بارگذاری...</p>';
-            try {
-                const data = { limit: 20 };
-                if (categoryId) data.categoryId = categoryId;
-                if (searchText) data.search = searchText;
-
-                const res = await callServerless('getAds', data);
-                if (!res || !res.ads || res.ads.length === 0) {
-                    list.innerHTML = '<p class="text-center text-gray-500 py-4">هیچ اعلانی یافت نشد.</p>';
-                    return;
-                }
-
-                list.innerHTML = res.ads.map(ad => `
-                    <div class="bg-white p-3 rounded-2xl shadow-sm flex items-center gap-3 active:scale-[0.98] transition cursor-pointer">
-                        <div class="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center text-2xl flex-shrink-0 overflow-hidden relative" id="img-box-${ad.id}">
-                            <span id="img-icon-${ad.id}">${ad.categoryIcon || '📦'}</span>
-                            <img id="img-el-${ad.id}" class="w-full h-full object-cover absolute inset-0 hidden">
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <h3 class="font-bold text-gray-800 text-sm truncate">${ad.title}</h3>
-                            <p class="text-xs text-gray-500 mt-1 truncate">${ad.provinceName} • ${ad.categoryName}</p>
-                            <p class="text-red-500 font-bold text-sm mt-1">${ad.isBarter ? '🔄 معاوضه' : (ad.price === 0 ? 'قابل مذاکره' : ad.price.toLocaleString() + ' افغانی')}</p>
-                        </div>
-                    </div>
-                `).join('');
-
-                res.ads.forEach(ad => {
-                    if (ad.image) {
-                        tg.Serverless.call('getImage', { fileId: ad.image }, (err, imgRes) => {
-                            if (!err && imgRes.success) {
-                                const el = document.getElementById(`img-el-${ad.id}`);
-                                if (el) {
-                                    el.src = imgRes.image;
-                                    el.classList.remove('hidden');
-                                    document.getElementById(`img-icon-${ad.id}`).classList.add('hidden');
-                                }
-                            }
-                        });
-                    }
-                });
-            } catch (error) {
-                list.innerHTML = `<p class="text-center text-red-500 py-4">خطا در دریافت اطلاعات!</p>`;
-            }
-        }
-
-        function filterCategory(id) { switchTab('home'); loadAds(id); }
-        function searchAds() { const val = document.getElementById('searchInput').value; loadAds(null, val); }
-
-        document.getElementById('createForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const btn = document.getElementById('submitBtn');
-            btn.innerText = 'در حال ثبت...'; btn.disabled = true;
-
-            try {
-                const isBarter = document.getElementById('adBarter').checked;
-                const catId = parseInt(document.getElementById('adCategory').value);
-                const subId = document.getElementById('adSubCategory').value ? parseInt(document.getElementById('adSubCategory').value) : null;
-                
-                const extraData = {};
-                document.querySelectorAll('#dynamicFieldsContainer input, #dynamicFieldsContainer select').forEach(input => {
-                    if (input.value) extraData[input.id.replace('field_', '')] = input.value;
-                });
-
-                let imageBase64 = null;
-                const fileInput = document.getElementById('adImage');
-                if (fileInput.files.length > 0) {
-                    imageBase64 = await new Promise((resolve) => {
-                        const reader = new FileReader();
-                        reader.onload = (event) => resolve(event.target.result);
-                        reader.readAsDataURL(fileInput.files[0]);
-                    });
-                }
-
-                const res = await callServerless('createAd', {
-                    title: document.getElementById('adTitle').value,
-                    price: isBarter ? 0 : (parseInt(document.getElementById('adPrice').value) || 0),
-                    categoryId: catId, subcategoryId: subId,
-                    province: document.getElementById('adProvince').value,
-                    phone: document.getElementById('adPhone').value,
-                    description: document.getElementById('adDesc').value,
-                    isBarter: isBarter, extraData: extraData, imageBase64: imageBase64
-                });
-
-                if (res && res.success) {
-                    tg.showAlert('🎉 اعلان شما ثبت و در کانال منتشر شد!');
-                    e.target.reset();
-                    document.getElementById('dynamicFieldsContainer').innerHTML = '';
-                    document.getElementById('subCategoryDiv').classList.add('hidden');
-                    togglePriceInput();
-                    switchTab('home');
-                }
-            } catch (err) {
-                tg.showAlert('خطا در ثبت: ' + (err.message || 'ارتباط برقرار نشد'));
-            } finally {
-                btn.innerText = 'ثبت اعلان'; btn.disabled = false;
-            }
-        });
-
-        // ⭐ بخش آپدیت شده برای نمایش آمار و فقط اعلان‌های فعال
-        async function loadProfile() {
-            try {
-                const res = await callServerless('getProfile');
-                if (res && res.success && res.user) {
-                    document.getElementById('profileName').innerText = res.user.name || 'کاربر';
-                    
-                    const allAds = res.ads || [];
-                    
-                    // محاسبه آمار
-                    const activeCount = allAds.filter(a => a.status === 'active').length;
-                    const soldCount = allAds.filter(a => a.status === 'sold').length;
-                    const deletedCount = allAds.filter(a => a.status === 'deleted').length;
-
-                    // نمایش کارت‌های آمار (با استایل نئومورفیک)
-                    document.getElementById('statsContainer').innerHTML = `
-                        <div class="stat-card">
-                            <span class="block text-blue-500 font-bold text-lg">${activeCount}</span>
-                            <span class="text-xs text-gray-500 mt-1 block">فعال</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="block text-green-500 font-bold text-lg">${soldCount}</span>
-                            <span class="text-xs text-gray-500 mt-1 block">فروخته شده</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="block text-red-500 font-bold text-lg">${deletedCount}</span>
-                            <span class="text-xs text-gray-500 mt-1 block">حذف شده</span>
-                        </div>
-                    `;
-
-                    // فقط اعلان‌های فعال را نشان بده
-                    const activeAds = allAds.filter(a => a.status === 'active');
-                    const list = document.getElementById('myAdsList');
-
-                    if (activeAds.length === 0) {
-                        list.innerHTML = '<p class="text-center text-gray-500 text-sm py-4">شما در حال حاضر هیچ اعلان فعالی ندارید.</p>';
-                    } else {
-                        list.innerHTML = activeAds.map(ad => `
-                            <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col gap-2 mb-2">
-                                <div class="flex justify-between items-center">
-                                    <div>
-                                        <h4 class="font-bold text-sm text-gray-800">${ad.title}</h4>
-                                        <p class="text-xs text-gray-500 mt-1">👁 ${ad.views} بازدید</p>
-                                    </div>
-                                    <span class="text-xs px-2 py-1 rounded-md bg-green-100 text-green-700">فعال</span>
-                                </div>
-                                <div class="flex gap-2 mt-2">
-                                    <button onclick="updateAd(${ad.id}, 'sold')" class="flex-1 bg-gray-100 text-gray-700 text-xs py-2 rounded-lg hover:bg-gray-200 transition">علامت فروخته شده</button>
-                                    <button onclick="deleteAd(${ad.id})" class="flex-1 bg-red-50 text-red-600 text-xs py-2 rounded-lg hover:bg-red-100 transition">حذف اعلان</button>
-                                </div>
-                            </div>
-                        `).join('');
-                    }
-                }
-            } catch (error) { tg.showAlert('خطا در دریافت پروفایل!'); }
-        }
-
-        async function updateAd(adId, status) {
-            if (!confirm('آیا از تغییر وضعیت این اعلان مطمئن هستید؟')) return;
-            try {
-                await callServerless('updateAdStatus', { adId: adId, status: status });
-                tg.showAlert('وضعیت اعلان با موفقیت تغییر کرد');
-                loadProfile();
-            } catch (e) { tg.showAlert('خطا: ' + e.message); }
-        }
-
-        async function deleteAd(adId) {
-            if (!confirm('آیا از حذف این اعلان مطمئن هستید؟')) return;
-            try {
-                await callServerless('deleteAd', { adId: adId });
-                tg.showAlert('اعلان با موفقیت حذف شد');
-                loadProfile();
-            } catch (e) { tg.showAlert('خطا: ' + e.message); }
-        }
-
-        init();
-    </script>
+/* ---- init ---- */
+if(tu.photo_url){$('pImg').src=tu.photo_url;$('pImg').classList.remove('hidden');$('pDef').classList.add('hidden')}else if(tu.first_name)$('pDef').textContent=tu.first_name[0];
+$('fC').innerHTML=CATS.map(c=>`<option value="${c.id}">${c.i} ${c.n}</option>`).join('');
+$('fP').innerHTML=PROV.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('');
+fields();
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>{b.classList.add('splash');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('splash'),1400)}));
+load();
+</script>
 </body>
 </html>
