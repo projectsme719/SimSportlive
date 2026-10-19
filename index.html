@@ -23,7 +23,7 @@
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-‎        /* ---------- هدر و دسته‌بندی‌ها (هماهنگ با سبک نئومورفیک) ---------- */
+        /* ---------- هدر و دسته‌بندی‌ها (هماهنگ با سبک نئومورفیک) ---------- */
         header.sticky { background: var(--bg) !important; box-shadow: 0 8px 18px -8px var(--shadow-dark) !important; }
         header button {
             width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%;
@@ -39,55 +39,57 @@
             box-shadow: 6px 6px 12px var(--shadow-dark), -6px -6px 12px var(--shadow-light);
         }
 
-‎        /* ---------- نوار پایین (نئومورفیک + انیمیشن آب) ---------- */
+        /* ---------- bottom nav ---------- */
         .nav-bar {
-            position: fixed; left: 50%; transform: translateX(-50%);
-            bottom: calc(14px + env(safe-area-inset-bottom, 0px));
-            width: min(92vw, 400px); padding: 12px 14px;
-            display: flex; align-items: center; justify-content: space-between;
-            background: var(--bg); border-radius: 34px; z-index: 50;
-            box-shadow: 14px 14px 28px var(--shadow-dark), -12px -12px 26px var(--shadow-light);
+            position: fixed; left: 0; right: 0; margin: 0 auto;
+            bottom: 14px; bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+            width: 92%; max-width: 400px; box-sizing: border-box; padding: 12px 14px;
+            display: flex; flex-direction: row; align-items: center; justify-content: space-between;
+            background: #e3e8ef; border-radius: 34px; z-index: 50;
+            box-shadow: 14px 14px 28px #b9c1cf, -12px -12px 26px #ffffff;
         }
 
         .nav-btn {
-            position: relative; width: 58px; height: 58px; flex-shrink: 0;
-            display: grid; place-items: center; border: 0; padding: 0; border-radius: 50%;
-            background: var(--bg); color: var(--icon); cursor: pointer; outline: none;
-            box-shadow: 6px 6px 13px var(--shadow-dark), -6px -6px 13px var(--shadow-light);
+            position: relative; width: 58px; height: 58px; flex: 0 0 58px; margin: 0; padding: 0;
+            display: flex; align-items: center; justify-content: center;
+            -webkit-appearance: none; appearance: none; border: 0; border-radius: 50%;
+            background: #e3e8ef; color: #8791a5; cursor: pointer; outline: none;
+            box-shadow: 6px 6px 13px #b9c1cf, -6px -6px 13px #ffffff;
             transition: color .3s, box-shadow .3s, transform .2s;
         }
-        .nav-btn svg { position: relative; z-index: 3; width: 25px; height: 25px; transition: color .3s, transform .3s; }
+        .nav-btn svg { position: relative; z-index: 3; width: 25px; height: 25px; display: block; transition: transform .3s; }
         .nav-btn:active { transform: scale(.94); }
 
-‎        /* تب فعال: آیکن آبی + نقطه زیر آیکن */
-        .nav-btn.tab-active { color: var(--blue); font-weight: normal; }
-        .nav-btn.tab-inactive { color: var(--icon); }
+        .nav-btn.tab-active { color: #2f80ff; font-weight: normal; }
+        .nav-btn.tab-inactive { color: #8791a5; }
         .nav-btn::after {
-            content: ""; position: absolute; bottom: 7px; left: 50%; width: 6px; height: 6px; margin-left: -3px;
-            border-radius: 50%; background: var(--blue); z-index: 3;
+            content: ""; position: absolute; bottom: 7px; left: 26px; width: 6px; height: 6px;
+            border-radius: 50%; background: #2f80ff; z-index: 3;
             opacity: 0; transform: scale(0); transition: opacity .3s, transform .3s;
         }
         .nav-btn.tab-active::after { opacity: 1; transform: scale(1); }
         .nav-btn.tab-active svg { transform: translateY(-2px); }
 
-‎        /* آب داخل دکمه */
+        /* water: clipped to the circle (the mask fixes the iOS Safari clipping bug) */
         .water {
-            position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
-            opacity: 0; transition: opacity .35s; pointer-events: none; z-index: 1;
+            position: absolute; top: 0; right: 0; bottom: 0; left: 0;
+            border-radius: 50%; overflow: hidden; pointer-events: none; z-index: 1;
+            opacity: 0; transition: opacity .35s;
+            -webkit-mask-image: -webkit-radial-gradient(white, black);
+            -webkit-transform: translateZ(0); transform: translateZ(0);
         }
         .water::before {
             content: ""; position: absolute; left: -50%; top: 108%;
             width: 200%; height: 200%; border-radius: 41%;
-            background: linear-gradient(180deg, var(--gold-soft), var(--gold));
+            background: linear-gradient(180deg, #ffe066, #fcc419);
             transition: top 1s cubic-bezier(.3, .7, .3, 1);
-            animation: waveMove 2s ease-in-out infinite;
+            animation: waveMove 2s linear infinite;
         }
         @keyframes waveMove {
             0%   { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-‎        /* حباب‌ها */
         .water i {
             position: absolute; bottom: -8px; width: 7px; height: 7px; border-radius: 50%;
             background: rgba(255,255,255,.75); opacity: 0;
@@ -101,22 +103,18 @@
             100% { transform: translateY(-46px) scale(1.1); opacity: 0; }
         }
 
-‎        /* حالت پر شدن: هنگام لمس، فوکوس صفحه‌کلید، یا بعد از کلیک */
         .nav-btn:active .water,
-        .nav-btn:focus-visible .water,
         .nav-btn.splash .water { opacity: .95; }
         .nav-btn:active .water::before,
-        .nav-btn:focus-visible .water::before,
         .nav-btn.splash .water::before { top: 22%; }
         .nav-btn:active .water i,
-        .nav-btn:focus-visible .water i,
         .nav-btn.splash .water i { animation: bubbleUp 1.2s ease-in infinite; }
 
-        .nav-btn:active, .nav-btn.splash, .nav-btn:focus-visible {
-            color: #fff;
-            box-shadow: 0 0 22px rgba(252, 196, 25, .55), 6px 6px 13px var(--shadow-dark), -6px -6px 13px var(--shadow-light);
+        .nav-btn:active, .nav-btn.splash {
+            color: #ffffff;
+            box-shadow: 0 0 22px rgba(252, 196, 25, .55), 6px 6px 13px #b9c1cf, -6px -6px 13px #ffffff;
         }
-        .nav-btn:active::after, .nav-btn.splash::after { background: #fff; }
+        .nav-btn:active::after, .nav-btn.splash::after { background: #ffffff; }
 
         @media (prefers-reduced-motion: reduce) {
             .water::before, .water i { animation: none !important; }
@@ -181,7 +179,7 @@
                 </select>
             </div>
 
-‎            <!-- ⭐ فیلد جدید: انتخاب ولایت -->
+            <!-- ⭐ فیلد جدید: انتخاب ولایت -->
             <div>
                 <label class="block text-sm text-gray-600 mb-1">ولایت</label>
                 <select id="adProvince" class="w-full bg-white rounded-xl p-3 shadow-sm outline-none focus:ring-2 focus:ring-red-400">
@@ -208,29 +206,29 @@
         <div id="myAdsList" class="space-y-3"></div>
     </main>
 
-‎    <!-- ===== نوار ناوبری جدید (ساختار و توابع قبلی حفظ شده؛ آیدی تب‌ها همان است) ===== -->
-    <nav class="nav-bar" dir="ltr">
-        <button onclick="switchTab('home')" id="tab-home" aria-label="خانه" class="nav-btn tab-active">
-            <span class="water"><i></i><i></i><i></i></span>
-‎            <!-- خانه -->
+    <!-- ===== نوار ناوبری جدید (ساختار و توابع قبلی حفظ شده؛ آیدی تب‌ها همان است) ===== -->
+    <nav class="nav-bar" dir="ltr" style="position:fixed;left:0;right:0;bottom:14px;margin:0 auto;width:92%;max-width:400px;display:flex;flex-direction:row;align-items:center;justify-content:space-between;">
+        <button onclick="switchTab('home')" id="tab-home" aria-label="خانه" class="nav-btn tab-active" type="button">
+            <span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none;"><i></i><i></i><i></i></span>
+            <!-- خانه -->
             <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>
         </button>
 
-        <button onclick="openSearch()" id="tab-search" aria-label="جستجو" class="nav-btn tab-inactive">
-            <span class="water"><i></i><i></i><i></i></span>
-‎            <!-- جستجو -->
+        <button onclick="openSearch()" id="tab-search" aria-label="جستجو" class="nav-btn tab-inactive" type="button">
+            <span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none;"><i></i><i></i><i></i></span>
+            <!-- جستجو -->
             <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg>
         </button>
 
-        <button onclick="switchTab('create')" id="tab-create" aria-label="ثبت اعلان" class="nav-btn tab-inactive">
-            <span class="water"><i></i><i></i><i></i></span>
-‎            <!-- ثبت اعلان -->
+        <button onclick="switchTab('create')" id="tab-create" aria-label="ثبت اعلان" class="nav-btn tab-inactive" type="button">
+            <span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none;"><i></i><i></i><i></i></span>
+            <!-- ثبت اعلان -->
             <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
         </button>
 
-        <button onclick="switchTab('profile')" id="tab-profile" aria-label="پروفایل" class="nav-btn tab-inactive">
-            <span class="water"><i></i><i></i><i></i></span>
-‎            <!-- پروفایل -->
+        <button onclick="switchTab('profile')" id="tab-profile" aria-label="پروفایل" class="nav-btn tab-inactive" type="button">
+            <span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none;"><i></i><i></i><i></i></span>
+            <!-- پروفایل -->
             <svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg>
         </button>
     </nav>
@@ -253,7 +251,7 @@
             { id: 3, name: 'وسایل نقلیه', icon: '🚗' }, { id: 4, name: 'املاک', icon: '🏢' }, { id: 5, name: 'خدمات', icon: '🛠️' }
         ];
 
-‎        // ⭐ لیست ۳۴ ولایت افغانستان
+        // ⭐ لیست ۳۴ ولایت افغانستان
         const PROVINCES = [
             { code: 'KBL', name: 'کابل' }, { code: 'HRT', name: 'هرات' }, { code: 'BLK', name: 'بلخ' }, { code: 'KDZ', name: 'کندز' },
             { code: 'BDG', name: 'بادغیس' }, { code: 'BGL', name: 'بغلان' }, { code: 'BAM', name: 'بامیان' }, { code: 'DAY', name: 'دایکندی' },
@@ -273,7 +271,7 @@
             initNavWater();
         }
 
-‎        // انیمیشن آب: با هر کلیک چند لحظه دکمه پر از آب می‌شود
+        // انیمیشن آب: با هر کلیک چند لحظه دکمه پر از آب می‌شود
         function initNavWater() {
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -313,7 +311,7 @@
 
         function toggleSearch() { document.getElementById('searchBox').classList.toggle('hidden'); }
 
-‎        // دکمه جستجوی نوار پایین: رفتن به خانه و باز کردن کادر جستجو
+        // دکمه جستجوی نوار پایین: رفتن به خانه و باز کردن کادر جستجو
         function openSearch() {
             switchTab('home');
             const box = document.getElementById('searchBox');
