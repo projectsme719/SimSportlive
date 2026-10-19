@@ -18,8 +18,8 @@ body{font-family:Vazirmatn,sans-serif;background:var(--bg);color:#2d3748;padding
 .card{border-radius:20px}
 .pill{padding:7px 14px;border-radius:999px;font-size:12px;white-space:nowrap;color:#718096;border:0;font-family:inherit;background:var(--bg);box-shadow:3px 3px 7px var(--d),-3px -3px 7px var(--l)}
 .pill.on{color:var(--blue);font-weight:700;box-shadow:inset 2px 2px 5px var(--d),inset -2px -2px 5px var(--l)}
-.cat{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:5px 5px 11px var(--d),-5px -5px 11px var(--l)}
-.cat.on{box-shadow:inset 3px 3px 7px var(--d),inset -3px -3px 7px var(--l)}
+.cat{color:#6b7a99;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;box-shadow:5px 5px 11px var(--d),-5px -5px 11px var(--l)}
+.cat.on{color:var(--blue);box-shadow:inset 3px 3px 7px var(--d),inset -3px -3px 7px var(--l)}
 .badge{font-size:10px;padding:2px 8px;border-radius:8px;background:#fee2e2;color:#dc2626;white-space:nowrap}
 .btn{border:0;border-radius:16px;padding:12px;font-weight:700;font-size:14px;font-family:inherit;color:#4a5568}
 .pri{background:var(--red);color:#fff;box-shadow:0 8px 16px rgba(239,68,68,.3)}
@@ -97,9 +97,19 @@ input[type=checkbox]{accent-color:var(--red);width:18px;height:18px;vertical-ali
   </form>
 </main>
 
-<main id="savedPage" class="hidden px-4 py-4 fade">
-  <div class="flex gap-2 mb-3"><button id="sv1" class="pill on" onclick="SV='fav';renderSaved()">❤️ نشان‌ها</button><button id="sv2" class="pill" onclick="SV='rec';renderSaved()">🕘 اخیراً دیده‌شده</button></div>
-  <div id="svList" class="space-y-3"></div>
+<main id="catsPage" class="hidden px-4 py-4 fade">
+  <h2 class="text-lg font-bold mb-4 text-center">دسته‌ها</h2>
+  <div id="catsList" class="space-y-3"></div>
+</main>
+
+<main id="chatPage" class="hidden px-4 py-4 fade">
+  <h2 class="text-lg font-bold mb-4 text-center">گفتگوها</h2>
+  <div class="raise card p-6 text-center">
+    <div class="inset w-20 h-20 rounded-full mx-auto mb-3 flex items-center justify-center text-gray-400"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4h0A2.5 2.5 0 0 1 4 13.5z"/><path d="M8.5 9h7M8.5 12h4"/></svg></div>
+    <p class="text-sm font-bold mb-1">هنوز گفتگویی ندارید</p>
+    <p class="text-xs text-gray-500 mb-4 leading-6">گفتگو با فروشنده‌ها از طریق ربات تلگرام انجام می‌شود.</p>
+    <button class="btn pri" onclick="openBot()">باز کردن ربات</button>
+  </div>
 </main>
 
 <main id="profilePage" class="hidden px-4 py-4 fade">
@@ -109,18 +119,18 @@ input[type=checkbox]{accent-color:var(--red);width:18px;height:18px;vertical-ali
     <h2 class="font-bold text-lg" id="pName">کاربر</h2>
     <p class="text-sm text-gray-500 mt-1" id="pStats">...</p>
   </div>
-  <h3 class="text-sm font-bold mb-3">مدیریت اعلان‌های من</h3>
+  <div class="flex gap-2 overflow-x-auto mb-3 py-1" id="pTabs"></div>
   <div id="myAds" class="space-y-3"></div>
 </main>
 
 <div id="sh"></div>
 
-<nav class="nav-bar" dir="ltr" style="position:fixed;left:0;right:0;bottom:14px;margin:0 auto;width:92%;max-width:400px;display:flex;flex-direction:row;align-items:center;justify-content:space-between">
-  <button type="button" onclick="switchTab('home')" id="tab-home" aria-label="خانه" class="nav-btn tab-active"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg></button>
-  <button type="button" onclick="openSearch()" id="tab-search" aria-label="جستجو" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></svg></button>
-  <button type="button" onclick="switchTab('create')" id="tab-create" aria-label="ثبت اعلان" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
-  <button type="button" onclick="switchTab('saved')" id="tab-saved" aria-label="نشان‌ها" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 20.5s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.9c0 5.4-7.5 10-7.5 10z"/></svg></button>
-  <button type="button" onclick="switchTab('profile')" id="tab-profile" aria-label="پروفایل" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></button>
+<nav class="nav-bar" dir="rtl" style="position:fixed;left:0;right:0;bottom:14px;margin:0 auto;width:92%;max-width:400px;display:flex;flex-direction:row;align-items:center;justify-content:space-between">
+  <button type="button" onclick="switchTab('home')" id="tab-home" aria-label="آگهی‌ها" class="nav-btn tab-active"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></button>
+  <button type="button" onclick="switchTab('cats')" id="tab-cats" aria-label="دسته‌ها" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></svg></button>
+  <button type="button" onclick="switchTab('create')" id="tab-create" aria-label="ثبت آگهی" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M12 9v7M8.5 12.5h7"/></svg></button>
+  <button type="button" onclick="switchTab('chat')" id="tab-chat" aria-label="چت" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4h0A2.5 2.5 0 0 1 4 13.5z"/><path d="M8.5 9h7M8.5 12h4"/></svg></button>
+  <button type="button" onclick="switchTab('profile')" id="tab-profile" aria-label="دیوار من" class="nav-btn"><span class="water" style="position:absolute;top:0;right:0;bottom:0;left:0;border-radius:50%;overflow:hidden;pointer-events:none"><i></i><i></i><i></i></span><svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.8"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/></svg></button>
 </nav>
 
 <script>
@@ -136,19 +146,21 @@ const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
 
 /* ---- data ---- */
 const sel=(k,l,o)=>({k,l,t:'s',o}),num=(k,l)=>({k,l,t:'n'}),COND=sel('cond','وضعیت',['نو','در حد نو','کارکرده']);
+const svg=(p,z)=>`<svg width="${z}" height="${z}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const ico=(c,z=26)=>svg(c.p,z);
 const CATS=[
-{id:1,n:'لوازم خانه',i:'🏠',s:['مبلمان','لوازم برقی','فرش و گلیم','ظروف'],f:[COND]},
-{id:2,n:'الکترونیک',i:'📱',s:['موبایل','لپ‌تاپ','تلویزیون','کنسول بازی','لوازم جانبی'],f:[COND]},
-{id:3,n:'وسایل نقلیه',i:'🚗',s:['سواری','موتورسایکل','باربری','لوازم یدکی'],f:[num('year','سال ساخت'),num('km','کارکرد (کیلومتر)'),sel('gear','گیربکس',['اتومات','دنده‌ای'])]},
-{id:4,n:'املاک',i:'🏢',s:['فروش خانه','رهن و اجاره','زمین','دکان و مغازه'],f:[num('area','متراژ'),num('rooms','تعداد اتاق'),sel('park','پارکینگ',['دارد','ندارد'])]},
-{id:5,n:'خدمات',i:'🛠️',s:['ساختمانی','حمل و نقل','آموزشی','تعمیرات'],f:[]},
-{id:6,n:'حیوانات',i:'🐾',s:['پرنده','گوسفند و بز','گربه و سگ','خوراک'],f:[num('age','سن (ماه)')]},
-{id:7,n:'وسایل شخصی',i:'👕',s:['لباس','کفش','ساعت و زیورآلات','کیف'],f:[COND]},
-{id:8,n:'کتاب و آموزش',i:'📚',s:['کتاب','کورس‌ها','لوازم تحریر'],f:[]},
-{id:9,n:'کار و استخدام',i:'💼',s:['تمام‌وقت','نیمه‌وقت','دورکاری'],f:[sel('role','نوع',['کارفرما','کارجو']),num('salary','حقوق ماهانه')]},
-{id:10,n:'سایر',i:'📦',s:[],f:[]}];
+{id:1,n:'لوازم خانه',p:'<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3"/><path d="M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v5H3z"/><path d="M6 18v2M18 18v2"/>',s:['مبلمان','لوازم برقی','فرش و گلیم','ظروف'],f:[COND]},
+{id:2,n:'الکترونیک',p:'<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',s:['موبایل','لپ‌تاپ','تلویزیون','کنسول بازی','لوازم جانبی'],f:[COND]},
+{id:3,n:'وسایل نقلیه',p:'<path d="M4 15v-3l2-5h12l2 5v3"/><path d="M3 12h18v5H3z"/><circle cx="7.5" cy="17.5" r="1.7"/><circle cx="16.5" cy="17.5" r="1.7"/>',s:['سواری','موتورسایکل','باربری','لوازم یدکی'],f:[num('year','سال ساخت'),num('km','کارکرد (کیلومتر)'),sel('gear','گیربکس',['اتومات','دنده‌ای'])]},
+{id:4,n:'املاک',p:'<rect x="5" y="3" width="14" height="18" rx="1.5"/><path d="M9 7.5h2M13 7.5h2M9 11.5h2M13 11.5h2M10 21v-4h4v4"/>',s:['فروش خانه','رهن و اجاره','زمین','دکان و مغازه'],f:[num('area','متراژ'),num('rooms','تعداد اتاق'),sel('park','پارکینگ',['دارد','ندارد'])]},
+{id:5,n:'خدمات',p:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',s:['ساختمانی','حمل و نقل','آموزشی','تعمیرات'],f:[]},
+{id:6,n:'حیوانات',p:'<circle cx="8" cy="9" r="1.7"/><circle cx="16" cy="9" r="1.7"/><circle cx="4.8" cy="13.5" r="1.5"/><circle cx="19.2" cy="13.5" r="1.5"/><path d="M12 12.5c-3 0-5 3-4.2 5.2.6 1.6 2.4 1.5 4.2 1.5s3.6.1 4.2-1.5c.8-2.2-1.2-5.2-4.2-5.2z"/>',s:['پرنده','گوسفند و بز','گربه و سگ','خوراک'],f:[num('age','سن (ماه)')]},
+{id:7,n:'وسایل شخصی',p:'<path d="M8 4 3 7l2 4 3-1.2V20h8v-10.2L19 11l2-4-5-3a4 4 0 0 1-8 0z"/>',s:['لباس','کفش','ساعت و زیورآلات','کیف'],f:[COND]},
+{id:8,n:'کتاب و آموزش',p:'<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H19v14H6.5A2.5 2.5 0 0 0 4 19.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H19v-5"/>',s:['کتاب','کورس‌ها','لوازم تحریر'],f:[]},
+{id:9,n:'کار و استخدام',p:'<rect x="3" y="7.5" width="18" height="12" rx="2"/><path d="M9 7.5V6a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 6v1.5M3 13h18"/>',s:['تمام‌وقت','نیمه‌وقت','دورکاری'],f:[sel('role','نوع',['کارفرما','کارجو']),num('salary','حقوق ماهانه')]},
+{id:10,n:'سایر',p:'<path d="M12 3 20 7.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5 12 12l8-4.5M12 12v9"/>',s:[],f:[]}];
 const PROV=[['KBL','کابل'],['HRT','هرات'],['BLK','بلخ'],['KDZ','کندز'],['BDG','بادغیس'],['BGL','بغلان'],['BAM','بامیان'],['DAY','دایکندی'],['FRA','فراه'],['FYB','فاریاب'],['GHA','غزنی'],['GHO','غور'],['HEL','هلمند'],['JOW','جوزجان'],['KAN','قندهار'],['KAP','کاپیسا'],['KHO','خوست'],['KNR','کنر'],['LAG','لغمان'],['LOG','لوگر'],['NAN','ننگرهار'],['NIM','نیمروز'],['NUR','نورستان'],['ORU','اروزگان'],['PAN','پنجشیر'],['PAR','پروان'],['PIA','پکتیا'],['PKA','پکتیکا'],['SAM','سمنگان'],['SAR','سرپل'],['TAK','تخار'],['WAR','میدان وردک'],['ZAB','زابل'],['BDS','بدخشان']];
-const cat=id=>CATS.find(c=>c.id==id)||{id:0,n:'همه',i:'🧭',s:[],f:[]};
+const cat=id=>CATS.find(c=>c.id==id)||{id:0,n:'همه',p:'<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',s:[],f:[]};
 const provName=c=>(PROV.find(p=>p[0]===c)||[0,c||'—'])[1];
 const ph=e=>'data:image/svg+xml,'+encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#e3e8ef'/><text x='50' y='66' font-size='48' text-anchor='middle'>"+e+"</text></svg>");
 const ago=t=>{const m=(Date.now()-t)/6e4;return m<2?'لحظاتی پیش':m<60?fa(~~m)+' دقیقه پیش':m<1440?fa(~~(m/60))+' ساعت پیش':fa(~~(m/1440))+' روز پیش'};
@@ -179,7 +191,7 @@ async function api(m,d={}){
 const norm=a=>({...a,cat:a.cat||a.categoryId,prov:a.prov||a.province,desc:a.desc||a.description||'',barter:a.barter!=null?a.barter:a.isBarter,imgs:a.imgs||[],a:a.a||{},ts:a.ts||Date.parse(a.createdAt)||0,views:a.views||0,status:a.status||'active'});
 
 /* ---- state & filtering ---- */
-let ADS=[],F={q:'',cat:0,sub:'',prov:'',pmin:'',pmax:'',photo:0,urgent:0,barter:0,sort:'new',a:{}},SV='fav',PH=[];
+let PT='mine',ADS=[],F={q:'',cat:0,sub:'',prov:'',pmin:'',pmax:'',photo:0,urgent:0,barter:0,sort:'new',a:{}},PH=[];
 const favs=()=>ls('dv_fav',[]),recs=()=>ls('dv_rec',[]),isFav=id=>favs().includes(id);
 function applyF(L){return L.filter(a=>{
   if(a.status!=='active')return 0;
@@ -197,7 +209,7 @@ const nActive=()=>[F.prov,F.pmin,F.pmax,F.photo,F.urgent,F.barter].filter(x=>x!=
 
 /* ---- rendering ---- */
 const card=a=>`<div class="raise card p-3 flex gap-3 active:scale-[.98] transition" onclick="openAd(${a.id})">
-<div class="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center text-3xl inset">${a.imgs[0]?`<img src="${a.imgs[0]}" class="w-full h-full object-cover">`:cat(a.cat).i}</div>
+<div class="w-24 h-24 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center text-3xl inset text-gray-400">${a.imgs[0]?`<img src="${a.imgs[0]}" class="w-full h-full object-cover">`:ico(cat(a.cat),42)}</div>
 <div class="flex-1 min-w-0"><div class="flex gap-1 items-center">${a.urgent?'<span class="badge">فوری</span>':''}<h3 class="font-bold text-sm truncate">${esc(a.title)}</h3></div>
 <p class="text-red-500 font-bold text-sm mt-1">${priceTxt(a)}</p>
 <p class="text-xs text-gray-500 mt-2 truncate">${ago(a.up||a.ts)} در ${provName(a.prov)} ${a.imgs.length?'📷':''}</p></div>
@@ -206,7 +218,7 @@ function render(){
   const L=sortL(applyF(ADS));
   $('list').innerHTML=L.length?L.map(card).join(''):'<p class="text-center text-gray-500 py-8">هیچ اعلانی یافت نشد.</p>';
   $('cnt').textContent=fa(L.length)+' اعلان';
-  $('cats').innerHTML=[cat(0),...CATS].map(c=>`<div class="flex flex-col items-center gap-2 flex-shrink-0" onclick="setCat(${c.id})"><div class="cat raise ${F.cat==c.id?'on':''}">${c.i}</div><span class="text-xs whitespace-nowrap ${F.cat==c.id?'font-bold':'text-gray-600'}">${c.n}</span></div>`).join('');
+  $('cats').innerHTML=[cat(0),...CATS].map(c=>`<div class="flex flex-col items-center gap-2 flex-shrink-0" onclick="setCat(${c.id})"><div class="cat raise ${F.cat==c.id?'on':''}">${ico(c)}</div><span class="text-xs whitespace-nowrap ${F.cat==c.id?'font-bold':'text-gray-600'}">${c.n}</span></div>`).join('');
   $('subs').innerHTML=cat(F.cat).s.map(s=>`<button class="pill ${F.sub===s?'on':''}" onclick="F.sub=F.sub==='${s}'?'':'${s}';render()">${s}</button>`).join('');
   $('quick').innerHTML=[['photo','📷 عکس‌دار'],['urgent','⚡ فوری'],['barter','🔄 معاوضه']].map(([k,l])=>`<button class="pill ${F[k]?'on':''}" onclick="F.${k}=F.${k}?0:1;render()">${l}</button>`).join('');
   const n=nActive();$('fc').textContent=n?' ('+fa(n)+')':'';
@@ -233,7 +245,7 @@ function openAd(id){const a=ADS.find(x=>x.id==id);if(!a)return;
   const r=recs().filter(x=>x!==id);r.unshift(id);sv('dv_rec',r.slice(0,20));
   if(LOCAL){const L=ls(K,[]),x=L.find(y=>y.id==id);if(x){x.views=(x.views||0)+1;sv(K,L);a.views=x.views}}
   const c=cat(a.cat),fl=c.f.filter(f=>a.a[f.k]!=null&&a.a[f.k]!=='');
-  sheet(`<div class="flex gap-2 overflow-x-auto mb-3">${a.imgs.map(s=>`<img src="${s}" class="h-56 rounded-2xl flex-shrink-0 object-cover">`).join('')||`<div class="inset w-full h-36 rounded-2xl flex items-center justify-center text-6xl">${c.i}</div>`}</div>
+  sheet(`<div class="flex gap-2 overflow-x-auto mb-3">${a.imgs.map(s=>`<img src="${s}" class="h-56 rounded-2xl flex-shrink-0 object-cover">`).join('')||`<div class="inset w-full h-36 rounded-2xl flex items-center justify-center text-gray-400 ">${ico(c,72)}</div>`}</div>
   <h2 class="font-bold text-lg">${a.urgent?'<span class="badge">فوری</span> ':''}${esc(a.title)}</h2>
   <p class="text-xs text-gray-500 mt-1">${ago(a.up||a.ts)} در ${provName(a.prov)} • ${c.n}${a.sub?' › '+esc(a.sub):''} • 👁 ${fa(a.views)}</p>
   <p class="text-red-500 font-bold text-lg my-3">${priceTxt(a)}</p>
@@ -246,20 +258,19 @@ const note=(id,v)=>{const n=ls('dv_note',{});n[id]=v;sv('dv_note',n)};
 const contact=id=>{const a=ADS.find(x=>x.id==id);a&&a.phone?location.href='tel:'+a.phone:say('فروشنده شماره‌ای ثبت نکرده است.')};
 function share(id){const a=ADS.find(x=>x.id==id),t=a.title+' — '+priceTxt(a);
   if(navigator.share)navigator.share({title:t,url:location.href}).catch(()=>{});else{navigator.clipboard&&navigator.clipboard.writeText(t+' '+location.href);say('کپی شد')}}
-function fav(id,reopen){let f=favs();f=f.includes(id)?f.filter(x=>x!==id):[id,...f];sv('dv_fav',f);render();renderSaved();if(reopen)openAd(id)}
+function fav(id,reopen){let f=favs();f=f.includes(id)?f.filter(x=>x!==id):[id,...f];sv('dv_fav',f);render();if(!$('profilePage').classList.contains('hidden'))loadProfile();if(reopen)openAd(id)}
 
 /* ---- tabs ---- */
 function switchTab(t){
-  ['home','create','saved','profile'].forEach(x=>{$(x+'Page').classList.add('hidden');$('tab-'+x).classList.remove('tab-active')});
+  ['home','cats','create','chat','profile'].forEach(x=>{$(x+'Page').classList.add('hidden');$('tab-'+x).classList.remove('tab-active')});
   $(t+'Page').classList.remove('hidden');$('tab-'+t).classList.add('tab-active');
   $('q').parentNode.parentNode.style.display=t==='home'?'':'none';
-  if(t==='home')load();if(t==='saved')renderSaved();if(t==='profile')loadProfile();
+  if(t==='home')load();if(t==='cats')renderCats();if(t==='profile')loadProfile();
 }
-function openSearch(){switchTab('home');$('q').focus();scrollTo({top:0,behavior:'smooth'})}
-function renderSaved(){
-  $('sv1').className='pill '+(SV==='fav'?'on':'');$('sv2').className='pill '+(SV==='rec'?'on':'');
-  const L=(SV==='fav'?favs():recs()).map(id=>ADS.find(a=>a.id==id)).filter(Boolean);
-  $('svList').innerHTML=L.length?L.map(card).join(''):'<p class="text-center text-gray-500 py-8">موردی وجود ندارد.</p>'}
+const BOT=''; // نام کاربری ربات (بدون @) برای دکمه چت
+function openBot(){if(BOT&&tg.openTelegramLink)tg.openTelegramLink('https://t.me/'+BOT);else say('نام کاربری ربات در کد (BOT) تنظیم نشده است.')}
+function renderCats(){$('catsList').innerHTML=CATS.map(c=>`<div class="raise card p-4"><div class="flex items-center gap-3" onclick="goCat(${c.id})"><div class="inset flex items-center justify-center text-gray-500" style="width:46px;height:46px;border-radius:50%">${ico(c,24)}</div><b class="text-sm flex-1">${c.n}</b><span class="text-gray-400">‹</span></div>${c.s.length?`<div class="flex flex-wrap gap-2 mt-3">${c.s.map(x=>`<button class="pill" onclick="goCat(${c.id},'${x}')">${x}</button>`).join('')}</div>`:''}</div>`).join('')}
+const goCat=(id,x='')=>{F.cat=id;F.sub=x;F.a={};switchTab('home')};
 
 /* ---- create ad ---- */
 function fields(){const c=cat($('fC').value);
@@ -278,8 +289,14 @@ $('cf').onsubmit=async e=>{e.preventDefault();const b=$('sb');b.disabled=true;b.
 
 /* ---- profile ---- */
 const ST={active:'فعال',sold:'فروخته شده',deleted:'حذف شده'};
-async function loadProfile(){try{const r=await api('getProfile');if(!r||!r.user)return;
+const PTABS=[['mine','آگهی‌های من'],['fav','نشان‌ها'],['notes','یادداشت‌ها'],['rec','بازدیدهای اخیر']];
+async function loadProfile(){try{
+  $('pTabs').innerHTML=PTABS.map(([k,l])=>`<button class="pill ${PT===k?'on':''}" onclick="PT='${k}';loadProfile()">${l}</button>`).join('');
+  const r=await api('getProfile');if(!r||!r.user)return;
   $('pName').textContent=r.user.name||'کاربر';$('pStats').textContent=`📋 ${fa(r.user.totalAds)} اعلان | ❤️ ${fa(favs().length)} نشان`;
+  if(PT!=='mine'){const N=ls('dv_note',{}),ids=PT==='fav'?favs():PT==='rec'?recs():Object.keys(N).filter(k=>N[k]);
+    const L=ids.map(id=>ADS.find(a=>a.id==id)).filter(Boolean);
+    $('myAds').innerHTML=L.length?L.map(a=>card(a)+(PT==='notes'?`<p class="text-xs text-gray-500 px-3 -mt-1">📝 ${esc(N[a.id])}</p>`:'')).join(''):'<p class="text-center text-gray-500 text-sm py-6">موردی وجود ندارد.</p>';return}
   const L=(r.ads||[]).map(norm);
   $('myAds').innerHTML=L.length?L.map(a=>`<div class="raise card p-4"><div class="flex justify-between items-center"><div><h4 class="font-bold text-sm">${esc(a.title)}</h4><p class="text-xs text-gray-500 mt-1">👁 ${fa(a.views)} بازدید • ${ST[a.status]||a.status}</p></div></div>
   ${a.status==='active'?`<div class="flex gap-2 mt-3 text-xs"><button class="btn raise flex-1" onclick="upd(${a.id},'sold')">فروخته شد</button>${LOCAL?`<button class="btn raise flex-1" onclick="upd(${a.id},'bump')">⬆️ نردبان</button>`:''}<button class="btn flex-1" style="color:#dc2626" onclick="upd(${a.id},'del')">حذف</button></div>`:''}</div>`).join(''):'<p class="text-center text-gray-500 text-sm py-4">هنوز اعلانی ثبت نکرده‌اید.</p>'
@@ -289,7 +306,7 @@ async function upd(id,w){if(w!=='bump'&&!confirm('آیا مطمئن هستید؟
 
 /* ---- init ---- */
 if(tu.photo_url){$('pImg').src=tu.photo_url;$('pImg').classList.remove('hidden');$('pDef').classList.add('hidden')}else if(tu.first_name)$('pDef').textContent=tu.first_name[0];
-$('fC').innerHTML=CATS.map(c=>`<option value="${c.id}">${c.i} ${c.n}</option>`).join('');
+$('fC').innerHTML=CATS.map(c=>`<option value="${c.id}">${c.n}</option>`).join('');
 $('fP').innerHTML=PROV.map(p=>`<option value="${p[0]}">${p[1]}</option>`).join('');
 fields();
 document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>{b.classList.add('splash');clearTimeout(b._t);b._t=setTimeout(()=>b.classList.remove('splash'),1400)}));
