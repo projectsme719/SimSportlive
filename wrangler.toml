@@ -27,3 +27,6 @@ id = "94dd94626b324b2d953c818a16a6c0bd"
 binding = "ATHLETES_WHITELIST"
 id = "0335a336ecc149ca9b30227e85a772ce"
 
+[[kv_namespaces]]
+binding = "MATCH_CALENDAR"
+id = "b9ecb2293f944c50a8d4abc5352f69c1"
