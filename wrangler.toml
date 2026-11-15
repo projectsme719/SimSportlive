@@ -1,23 +1,15 @@
 name = "afg-sports-live-bot"
 main = "src/index.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2024-11-15"
 
-# استفاده از یک زمان‌بندی ۵ دقیقه‌ای
-# ما عملیات اسکراپ را داخل خودِ کد مدیریت می‌کنیم تا خطا ندهد
-
-
-
-# ۱. دیتابیس لایوهای ارسال شده
 [[kv_namespaces]]
 binding = "POSTED_LIVES"
 id = "94dd94626b324b2d953c818a16a6c0bd"
 
-# ۲. دیتابیس لیست سفید ورزشکاران
 [[kv_namespaces]]
 binding = "ATHLETES_WHITELIST"
 id = "0335a336ecc149ca9b30227e85a772ce"
 
-# ۳. دیتابیس تقویم و نتایج مینی‌اپ
 [[kv_namespaces]]
 binding = "MATCH_CALENDAR"
 id = "b9ecb2293f944c50a8d4abc5352f69c1"
