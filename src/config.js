@@ -19,3 +19,4 @@ export const CONFIG = {
   // مدل‌ها به ترتیب امتحان می‌شوند (اگر اولی وجود نداشت/بازنشسته شد، بعدی)
   GEMINI_MODEL_FALLBACKS: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'],
 };
+
