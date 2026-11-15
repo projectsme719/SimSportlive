@@ -9,6 +9,17 @@ import {
 } from './services/telegram.js';
 import { watchHtml } from './watch.js';
 
+// آدرس Worker را برای دکمه‌های web_app ذخیره می‌کند
+async function saveOrigin(env, origin) {
+  try {
+    if (env.WORKER_URL) return;
+    const cur = await env.POSTED_LIVES.get('config:origin');
+    if (cur !== origin) await env.POSTED_LIVES.put('config:origin', origin);
+  } catch (e) {
+    console.error('saveOrigin error:', e);
+  }
+}
+
 export default {
   // اجرای خودکار هر ۵ دقیقه (Cron Trigger)
   async scheduled(event, env, ctx) {
@@ -33,6 +44,7 @@ export default {
       if (!env.TELEGRAM_WEBHOOK_SECRET || url.searchParams.get('key') !== env.TELEGRAM_WEBHOOK_SECRET) {
         return new Response('Forbidden', { status: 403 });
       }
+      await saveOrigin(env, url.origin);
       const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/setWebhook`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -65,6 +77,7 @@ export default {
       ctx.waitUntil(
         (async () => {
           try {
+            await saveOrigin(env, url.origin);
             if (update.callback_query) {
               await handleAdminCallback(update.callback_query, env);
             } else if (update.message) {
