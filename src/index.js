@@ -111,15 +111,36 @@ async function handleMessage(message, env) {
 async function handleManualLink(videoId, chatId, env) {
   await sendText(env, chatId, '🔍 در حال تحلیل لینک...');
 
-  const video = await getSingleVideoInfo(videoId, env.YOUTUBE_API_KEY);
-  if (!video) return sendText(env, chatId, '❌ اطلاعات این ویدیو پیدا نشد.');
+  // هر مرحله جدا بررسی می‌شود تا خطا مستقیم در چت نمایش داده شود
+  try {
+    if (!env.YOUTUBE_API_KEY) {
+      return sendText(env, chatId, '❌ سکرت YOUTUBE_API_KEY در کلودفلر تنظیم نشده است.');
+    }
 
-  const whitelist = await getWhitelist(env);
-  const ai = await analyzeMatchWithGemini(video, whitelist, env);
-  if (!ai.ok) {
-    await sendText(env, chatId, '⚠️ Gemini پاسخ نداد؛ بدون کپشن هوشمند برای بررسی ارسال می‌شود.');
+    const video = await getSingleVideoInfo(videoId, env.YOUTUBE_API_KEY);
+    if (!video) {
+      return sendText(env, chatId, '❌ اطلاعات این ویدیو پیدا نشد (آیدی یا YOUTUBE_API_KEY را بررسی کنید).');
+    }
+
+    const whitelist = await getWhitelist(env);
+
+    const ai = await analyzeMatchWithGemini(video, whitelist, env);
+    if (!ai.ok) {
+      await sendText(
+        env,
+        chatId,
+        `⚠️ Gemini پاسخ نداد؛ بدون کپشن هوشمند برای بررسی ارسال می‌شود.\nدلیل: ${ai.error || 'نامشخص'}`.slice(0, 500)
+      );
+    }
+
+    const sent = await sendAdminReview(video, ai, env);
+    if (!sent) {
+      await sendText(env, chatId, '❌ ارسال پیام بررسی ناموفق بود. لاگ Cloudflare را ببینید.');
+    }
+  } catch (e) {
+    console.error('handleManualLink error:', e);
+    await sendText(env, chatId, `❌ خطا: ${String(e?.message || e).slice(0, 400)}`);
   }
-  await sendAdminReview(video, ai, env);
 }
 
 // ───── بررسی خودکار لایوها ─────
