@@ -1,78 +1,52 @@
 import { CONFIG } from '../config.js';
 
-const EMPTY = { isAfghan: false, confidence: 0, fighterName: "", caption: "" };
-
-export async function analyzeMatchWithGemini(video, whitelistNames, apiKey) {
+export async function analyzeStream(title, description, apiKey) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
-  const description = (video.description || "").slice(0, 1500);
-
   const prompt = `
-تو دستیار تحلیل‌گر کانال تلگرامی «سیم‌ورغ اسپورت» برای ورزش افغانستان هستی.
+    شما گزارشگر ورزشی کانال تلگرام افغانستان هستید. اطلاعات زیر را تحلیل کنید:
+    عنوان مسابقه: "${title}"
+    توضیحات: "${description}"
 
-اطلاعات پخش زنده:
-- عنوان: ${video.title}
-- کانال یوتیوب: ${video.channelTitle}
-- توضیحات: ${description}
+    وظایف شما:
+    ۱. بررسی کنید آیا ورزشکار افغان در این مسابقه حضور دارد یا خیر (مانند نصرت حق‌پرست، جاوید بشارت، سیر بهادرزاده، فریدون مجیدزاده، و...).
+    ۲. حتی اگر ورزشکار افغان حضور نداشت و یک مسابقه جهانی/مهم بود (مثل UFC یا مسابقات بزرگ MMA)، حتماً یک متن خبر بسیار جذاب، پرانرژی و هیجان‌انگیز به زبان دری/فارسی بنویسید.
+    ۳. متن باید حداکثر ۵ سطر باشد، همراه با ایموجی‌های مناسب ورزشی و اصطلاحات هیجان‌انگیز گزارشگری.
+    ۴. هیچ عنوان یا متن انگلیسی در کپشن نهایی نباید وجود داشته باشد.
 
-فهرست ورزشکاران افغان شناخته‌شده:
-${whitelistNames.join(", ") || "(خالی)"}
-
-قوانین سخت‌گیرانه:
-1. isAfghan را فقط وقتی true کن که حداقل یکی از این موارد در متن صریحاً آمده باشد: کلمه Afghanistan / Afghan / AFG / افغانستان / پرچم 🇦🇫، یا نام یکی از ورزشکاران فهرست بالا، یا نام تیم ملی افغانستان.
-2. اگر مسابقه بین دو ورزشکار غیرافغان است و هیچ نشانه‌ای از افغانستان ندارد، isAfghan = false و caption = "" بده.
-3. هرگز حدس نزن. اگر مطمئن نیستی، isAfghan = false بده.
-4. confidence عددی بین 0 تا 100 است و میزان اطمینان تو از اینکه مسابقه مربوط به افغانستان است.
-5. اگر isAfghan = true بود، caption را به زبان فارسی دری، هیجانی، جذاب و کوتاه (حداکثر ۵ خط) بنویس.
-   - از ترجمه کپشن انگلیسی یوتیوب استفاده نکن، کاملاً بازنویسی کن.
-   - نام مبارزان یا تیم‌ها را فارسی بنویس و نوع ورزش را مشخص کن (MMA، بوکس، فوتبال، فوتسال و...).
-   - از ایموجی مرتبط مثل 🇦🇫 🥊 🔴 🏆 استفاده کن.
-   - لینک و عنوان انگلیسی در کپشن نیاید.
-
-خروجی را دقیقاً و فقط به صورت JSON زیر بده:
-{
-  "isAfghan": true,
-  "confidence": 0,
-  "fighterName": "",
-  "caption": ""
-}
-`;
+    خروجی را دقیقاً به فرمت JSON زیر برگردانید (بدون هیچ متن اضافه‌ای):
+    {
+      "isAfghan": true,
+      "confidence": 95,
+      "fighterName": "نام ورزشکار یا نام رویداد جهانی",
+      "caption": "متن جذاب دری برای کانال (حداکثر ۵ سطر با ایموجی)"
+    }
+  `;
 
   try {
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.3,
-        },
-      }),
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      console.error("Gemini HTTP error:", res.status, JSON.stringify(data));
-      return EMPTY;
+    const data = await response.json();
+    const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // پاکسازی پاسخ جهت دریافت JSON تمیز
+    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
     }
 
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (!text) {
-      console.error("Gemini empty response:", JSON.stringify(data));
-      return EMPTY;
-    }
-
-    const parsed = JSON.parse(text);
+    throw new Error('پاسخ جیمینای نا معتبر بود');
+  } catch (error) {
+    console.error('Gemini API Error:', error);
     return {
-      isAfghan: parsed.isAfghan === true,
-      confidence: Number(parsed.confidence) || 0,
-      fighterName: String(parsed.fighterName || ""),
-      caption: String(parsed.caption || ""),
+      isAfghan: false,
+      confidence: 30,
+      fighterName: 'مسابقه ورزشی زنده',
+      caption: `🔥 **پخش زنده مسابقات جذاب ورزشی**\n\nهم‌اکنون می‌توانید این مسابقه دیدنی را مستقیماً داخل تلگرام به صورت زنده تماشا کنید!\n\n📌 برای تماشا روی دکمه زیر کلیک کنید. 👇`
     };
-  } catch (err) {
-    console.error("Gemini exception:", err);
-    return EMPTY;
   }
 }
