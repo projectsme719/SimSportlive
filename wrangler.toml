@@ -1,0 +1,30 @@
+name = "afg-sports-live-bot"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# بررسی خودکار لایوها هر ۵ دقیقه
+[triggers]
+crons = ["*/5 * * * *"]
+
+[observability]
+enabled = true
+
+# ⚠️ توکن‌ها و کلیدها را اینجا ننویسید (گیت‌هاب عمومی نشود!)
+# این‌ها را به‌صورت Secret ست کنید:
+#   npx wrangler secret put TELEGRAM_BOT_TOKEN
+#   npx wrangler secret put YOUTUBE_API_KEY
+#   npx wrangler secret put GEMINI_API_KEY
+#   npx wrangler secret put TELEGRAM_WEBHOOK_SECRET   (یک رشته تصادفی، فقط حروف/عدد/_/-)
+# یا در داشبورد: Workers > پروژه > Settings > Variables and Secrets (نوع Secret)
+
+[vars]
+# اختیاری: اگر مدل Gemini عوض شد، فقط همین را تغییر دهید
+GEMINI_MODEL = "gemini-3.8-flash"
+
+[[kv_namespaces]]
+binding = "POSTED_LIVES"
+id = "94dd94626b324b2d953c818a16a6c0bd"
+
+[[kv_namespaces]]
+binding = "ATHLETES_WHITELIST"
+id = "0335a336ecc149ca9b30227e85a772ce"
