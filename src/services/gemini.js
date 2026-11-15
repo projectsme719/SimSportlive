@@ -1,12 +1,16 @@
 import { CONFIG } from '../config.js';
 
-function fallbackResult() {
+const PER_CALL_TIMEOUT_MS = 10000; // حداکثر زمان هر درخواست
+const START_NEW_ATTEMPT_BEFORE_MS = 8000; // بعد از این زمان مدل بعدی امتحان نمی‌شود
+
+function fallbackResult(error) {
   return {
     ok: false, // یعنی خطای Gemini بود، نه تحلیل واقعی
     isAfghan: false,
     confidence: 0,
     fighterName: '',
     caption: '',
+    error: error || '',
   };
 }
 
@@ -15,6 +19,7 @@ async function callModel(model, prompt, apiKey) {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
+    signal: AbortSignal.timeout(PER_CALL_TIMEOUT_MS),
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
       generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
@@ -34,6 +39,8 @@ async function callModel(model, prompt, apiKey) {
 
 export async function analyzeMatchWithGemini(video, whitelist, env) {
   const apiKey = env.GEMINI_API_KEY;
+  if (!apiKey) return fallbackResult('GEMINI_API_KEY تنظیم نشده است');
+
   const names = (whitelist || []).slice(0, 200).join(', ');
 
   const prompt = `
@@ -61,7 +68,11 @@ export async function analyzeMatchWithGemini(video, whitelist, env) {
     (m, i, a) => m && a.indexOf(m) === i
   );
 
+  const startedAt = Date.now();
+  let lastError = '';
+
   for (const model of models) {
+    if (Date.now() - startedAt > START_NEW_ATTEMPT_BEFORE_MS) break;
     try {
       const r = await callModel(model, prompt, apiKey);
       return {
@@ -72,10 +83,9 @@ export async function analyzeMatchWithGemini(video, whitelist, env) {
         caption: String(r.caption || '').slice(0, 900),
       };
     } catch (e) {
+      lastError = `${model}: ${e.message}`;
       console.error(`Gemini [${model}] failed:`, e.message);
-      // مدل وجود ندارد یا بازنشسته شده → مدل بعدی؛ خطاهای دیگر هم امتحان بعدی
-      continue;
     }
   }
-  return fallbackResult();
+  return fallbackResult(lastError);
 }
