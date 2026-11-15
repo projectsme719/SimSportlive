@@ -1,12 +1,11 @@
 export const CONFIG = {
-  CHANNEL_ID: "-1004402889429",
+  CHANNEL_ID: "-1004402889429", // آیدی عددی کانال
   CHANNEL_USERNAME: "@SimSportlive",
-  ADMIN_ID: "7566522940",
+  ADMIN_ID: "7566522940",       // چت آیدی عددی ادمین
   ADMIN_USERNAME: "@Akh_Aurora",
   BOT_USERNAME: "@SimSportBot",
-  MINI_APP_URL: "https://simsports-bot.YOUR_SUBDOMAIN.workers.dev/miniapp",
   
-  // کانال‌های هدف در یوتیوب (قابل گسترش)
+  // کانال‌های هدف در یوتیوب (شناسه‌های رسمی)
   YOUTUBE_CHANNELS: [
     "UCUf538Z2yL-LhT4tS24hD-A", // Karate Combat
     "UCqZoX98yW0E71y5f-S78g7g", // ONE Championship
