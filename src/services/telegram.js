@@ -19,8 +19,19 @@ async function tg(env, method, body) {
   }
 }
 
+// لینک مستقیم Mini App (برای پست کانال). نیاز به ساخت Mini App در BotFather با Short name = watch
 export function miniAppUrl(videoId) {
   return `https://t.me/${CONFIG.BOT_USERNAME}/${CONFIG.APP_SHORT_NAME}?startapp=${videoId}`;
+}
+
+// آدرس Worker: از متغیر WORKER_URL یا مقداری که از وب‌هوک ذخیره شده
+async function getOrigin(env) {
+  if (env.WORKER_URL) return env.WORKER_URL.replace(/\/$/, '');
+  try {
+    return await env.POSTED_LIVES.get('config:origin');
+  } catch {
+    return null;
+  }
 }
 
 // تامبنیل: اگر maxres نبود، hqdefault
@@ -33,10 +44,19 @@ async function pickThumbnail(videoId) {
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
-function watchButton(video) {
-  // اگر امبد ممنوع باشد مینی‌اپ کار نمی‌کند → لینک مستقیم یوتیوب
+// دکمه کانال: فقط لینک مستقیم Mini App (در کانال web_app مجاز نیست)
+function channelWatchButton(video) {
   const url = video.embeddable === false ? video.link : miniAppUrl(video.id);
   return { text: '👁 تماشای زنده', url };
+}
+
+// دکمه پیش‌نمایش ادمین (چت خصوصی): مستقیم داخل تلگرام باز می‌شود
+async function adminPreviewButton(video, env) {
+  const origin = await getOrigin(env);
+  if (origin && video.embeddable !== false) {
+    return { text: '👁 پیش‌نمایش پخش', web_app: { url: `${origin}/watch?v=${video.id}` } };
+  }
+  return { text: '👁 پیش‌نمایش پخش', url: video.embeddable === false ? video.link : miniAppUrl(video.id) };
 }
 
 export async function sendText(env, chatId, text, replyMarkup) {
@@ -49,13 +69,12 @@ export async function sendText(env, chatId, text, replyMarkup) {
 
 export async function publishToChannel(video, caption, env) {
   const photo = await pickThumbnail(video.id);
-  // اول برش، بعد escape (تا تگ/entity نصفه نشود)
   const res = await tg(env, 'sendPhoto', {
     chat_id: CONFIG.CHANNEL_ID,
     photo,
     caption: esc(String(caption).slice(0, 800)),
     parse_mode: 'HTML',
-    reply_markup: { inline_keyboard: [[watchButton(video)]] },
+    reply_markup: { inline_keyboard: [[channelWatchButton(video)]] },
   });
   return res.ok === true;
 }
@@ -79,7 +98,7 @@ export async function sendAdminReview(video, ai, env) {
 
   const keyboard = {
     inline_keyboard: [
-      [{ text: '👁 پیش‌نمایش پخش', url: video.link }],
+      [await adminPreviewButton(video, env)],
       [
         { text: '✅ تأیید و انتشار', callback_data: `app:${video.id}` },
         { text: '❌ رد کردن', callback_data: `rej:${video.id}` },
