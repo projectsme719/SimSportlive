@@ -15,3 +15,4 @@
 4. **Mini App** در BotFather: `/newapp` → ربات `SimSportBot` → Short name = `watch` → URL = `https://<worker>.workers.dev/watch`
 5. ربات را در کانال `@SimSportlive` **ادمین** کنید (با دسترسی ارسال پیام).
 6. Cron هر ۵ دقیقه از `wrangler.toml` فعال می‌شود.
+
