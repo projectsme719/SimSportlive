@@ -1,0 +1,23 @@
+name = "simsports-bot"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+# زمان‌بندی دوگانه
+[triggers]
+crons = [
+  "*/5 * * * *",        # هر ۵ دقیقه: بررسی لایوهای یوتیوب
+  "0 0 * * 0"           # یکشنبه‌ها ساعت ۰۰:۰۰: به‌روزرسانی پویا اسامی از Tapology
+]
+
+# دیتابیس‌های KV کلودفلر
+[[kv_namespaces]]
+binding = "POSTED_LIVES"
+id = "شناسه_KV_پست‌های_ارسال_شده"
+
+[[kv_namespaces]]
+binding = "ATHLETES_WHITELIST"
+id = "شناسه_KV_لیست_سفید_ورزشکاران"
+
+[[kv_namespaces]]
+binding = "MATCH_CALENDAR"
+id = "شناسه_KV_نتایج_و_تقویم_مینی_اپ"
