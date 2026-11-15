@@ -1,51 +1,78 @@
 import { CONFIG } from '../config.js';
 
+const EMPTY = { isAfghan: false, confidence: 0, fighterName: "", caption: "" };
+
 export async function analyzeMatchWithGemini(video, whitelistNames, apiKey) {
-  // استفاده دقیق از مدل 3.6-flash طبق دستور شما
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${CONFIG.GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
-  const systemPrompt = `
-تو یک تحلیل‌گر هوشمند ورزشی برای کشور افغانستان (🇦🇫) هستی.
-اطلاعات ویدیو:
+  const description = (video.description || "").slice(0, 1500);
+
+  const prompt = `
+تو دستیار تحلیل‌گر کانال تلگرامی «سیم‌ورغ اسپورت» برای ورزش افغانستان هستی.
+
+اطلاعات پخش زنده:
 - عنوان: ${video.title}
-- توضیحات: ${video.description}
-- کانال: ${video.channelTitle}
+- کانال یوتیوب: ${video.channelTitle}
+- توضیحات: ${description}
 
-اسامی مبارزان در دیتابیس ما:
-${whitelistNames.join(", ")}
+فهرست ورزشکاران افغان شناخته‌شده:
+${whitelistNames.join(", ") || "(خالی)"}
 
-وظایف:
-۱. مشخص کن آیا این مسابقه مربوط به افغانستان (AFG / 🇦🇫) یا فایترهای فهرست شده است؟
-۲. درصد اطمینان (0 تا 100) بده.
-۳. نام مبارز یا تیم افغان را استخراج کن.
-۴. یک کپشن هیجانی با پرچم 🇦🇫 و ایموجی‌ها به زبان فارسی دری بنویس.
+قوانین سخت‌گیرانه:
+1. isAfghan را فقط وقتی true کن که حداقل یکی از این موارد در متن صریحاً آمده باشد: کلمه Afghanistan / Afghan / AFG / افغانستان / پرچم 🇦🇫، یا نام یکی از ورزشکاران فهرست بالا، یا نام تیم ملی افغانستان.
+2. اگر مسابقه بین دو ورزشکار غیرافغان است و هیچ نشانه‌ای از افغانستان ندارد، isAfghan = false و caption = "" بده.
+3. هرگز حدس نزن. اگر مطمئن نیستی، isAfghan = false بده.
+4. confidence عددی بین 0 تا 100 است و میزان اطمینان تو از اینکه مسابقه مربوط به افغانستان است.
+5. اگر isAfghan = true بود، caption را به زبان فارسی دری، هیجانی، جذاب و کوتاه (حداکثر ۵ خط) بنویس.
+   - از ترجمه کپشن انگلیسی یوتیوب استفاده نکن، کاملاً بازنویسی کن.
+   - نام مبارزان یا تیم‌ها را فارسی بنویس و نوع ورزش را مشخص کن (MMA، بوکس، فوتبال، فوتسال و...).
+   - از ایموجی مرتبط مثل 🇦🇫 🥊 🔴 🏆 استفاده کن.
+   - لینک و عنوان انگلیسی در کپشن نیاید.
 
-پاسخ را دقیقاً و فقط در قالب JSON زیر ارسال کن:
+خروجی را دقیقاً و فقط به صورت JSON زیر بده:
 {
   "isAfghan": true,
-  "confidence": 90,
-  "fighterName": "نام مبارز",
-  "caption": "متن کپشن فارسی"
+  "confidence": 0,
+  "fighterName": "",
+  "caption": ""
 }
 `;
 
   try {
-    const response = await fetch(url, {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: systemPrompt }] }],
-        generationConfig: { responseMimeType: "application/json" }
-      })
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.3,
+        },
+      }),
     });
 
-    const data = await response.json();
-    if (data.candidates && data.candidates[0].content.parts[0].text) {
-      return JSON.parse(data.candidates[0].content.parts[0].text);
-    }
-  } catch (error) {
-    console.error("Gemini AI Error:", error);
-  }
+    const data = await res.json();
 
-  return { isAfghan: false, confidence: 0, fighterName: "", caption: "" };
+    if (!res.ok) {
+      console.error("Gemini HTTP error:", res.status, JSON.stringify(data));
+      return EMPTY;
+    }
+
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) {
+      console.error("Gemini empty response:", JSON.stringify(data));
+      return EMPTY;
+    }
+
+    const parsed = JSON.parse(text);
+    return {
+      isAfghan: parsed.isAfghan === true,
+      confidence: Number(parsed.confidence) || 0,
+      fighterName: String(parsed.fighterName || ""),
+      caption: String(parsed.caption || ""),
+    };
+  } catch (err) {
+    console.error("Gemini exception:", err);
+    return EMPTY;
+  }
 }
