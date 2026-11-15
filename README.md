@@ -1,1 +1,1 @@
-# divar-miniapp
+# afg-sports-live-bot
