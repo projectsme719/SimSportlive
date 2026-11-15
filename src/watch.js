@@ -34,5 +34,5 @@ export const watchHtml = `<!DOCTYPE html>
       document.querySelector(".bar").textContent = "لینک پخش نامعتبر است";
     }
   </script>
-</body>
+</body> 
 </html>`;
