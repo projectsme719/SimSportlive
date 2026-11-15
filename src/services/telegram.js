@@ -4,14 +4,19 @@ const esc = (s) =>
   String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 async function tg(env, method, body) {
-  const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!data.ok) console.error(`Telegram ${method} failed:`, JSON.stringify(data));
-  return data;
+  try {
+    const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!data.ok) console.error(`Telegram ${method} failed:`, JSON.stringify(data));
+    return data;
+  } catch (e) {
+    console.error(`Telegram ${method} exception:`, e);
+    return { ok: false, description: String(e?.message || e) };
+  }
 }
 
 export function miniAppUrl(videoId) {
@@ -22,7 +27,7 @@ export function miniAppUrl(videoId) {
 async function pickThumbnail(videoId) {
   const maxres = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
   try {
-    const r = await fetch(maxres, { method: 'HEAD' });
+    const r = await fetch(maxres, { method: 'HEAD', signal: AbortSignal.timeout(4000) });
     if (r.ok) return maxres;
   } catch {}
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
@@ -44,16 +49,18 @@ export async function sendText(env, chatId, text, replyMarkup) {
 
 export async function publishToChannel(video, caption, env) {
   const photo = await pickThumbnail(video.id);
+  // اول برش، بعد escape (تا تگ/entity نصفه نشود)
   const res = await tg(env, 'sendPhoto', {
     chat_id: CONFIG.CHANNEL_ID,
     photo,
-    caption: esc(caption).slice(0, 1024),
+    caption: esc(String(caption).slice(0, 800)),
     parse_mode: 'HTML',
     reply_markup: { inline_keyboard: [[watchButton(video)]] },
   });
   return res.ok === true;
 }
 
+// true اگر پیام به ادمین رسید
 export async function sendAdminReview(video, ai, env) {
   // ذخیره موقت اطلاعات؛ callback_data محدود به ۶۴ بایت است
   await env.POSTED_LIVES.put(
@@ -64,13 +71,12 @@ export async function sendAdminReview(video, ai, env) {
 
   const text =
     `⚠️ <b>پخش زنده جدید جهت بررسی</b>\n\n` +
-    `📌 <b>عنوان:</b> ${esc(video.title)}\n` +
-    `📺 <b>کانال:</b> ${esc(video.channelTitle)}\n` +
+    `📌 <b>عنوان:</b> ${esc(String(video.title).slice(0, 150))}\n` +
+    `📺 <b>کانال:</b> ${esc(String(video.channelTitle).slice(0, 60))}\n` +
     `🎯 <b>اطمینان AI:</b> ${ai.confidence}%\n` +
     `🇦🇫 <b>افغانی:</b> ${ai.isAfghan ? 'بله' : 'خیر'}\n\n` +
-    `📝 <b>کپشن پیشنهادی:</b>\n${esc(ai.caption || '— (Gemini پاسخ نداد)')}`;
+    `📝 <b>کپشن پیشنهادی:</b>\n${esc(String(ai.caption || '— (Gemini پاسخ نداد)').slice(0, 450))}`;
 
-  const photo = await pickThumbnail(video.id);
   const keyboard = {
     inline_keyboard: [
       [{ text: '👁 پیش‌نمایش پخش', url: video.link }],
@@ -84,22 +90,25 @@ export async function sendAdminReview(video, ai, env) {
     ],
   };
 
-  const res = await tg(env, 'sendPhoto', {
+  const photo = await pickThumbnail(video.id);
+  let res = await tg(env, 'sendPhoto', {
     chat_id: CONFIG.ADMIN_ID,
     photo,
-    caption: text.slice(0, 1024),
+    caption: text,
     parse_mode: 'HTML',
     reply_markup: keyboard,
   });
+
   // اگر عکس نشد، حداقل متن برود
   if (!res.ok) {
-    await tg(env, 'sendMessage', {
+    res = await tg(env, 'sendMessage', {
       chat_id: CONFIG.ADMIN_ID,
       text,
       parse_mode: 'HTML',
       reply_markup: keyboard,
     });
   }
+  return res.ok === true;
 }
 
 export async function handleAdminCallback(cb, env) {
