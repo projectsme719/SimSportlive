@@ -1,22 +1,21 @@
 export const CONFIG = {
-  CHANNEL_ID: "-1004402889429",
-  CHANNEL_USERNAME: "@SimSportlive",
-  ADMIN_ID: "7566522940",
-  BOT_USERNAME: "SimSportBot",        // بدون @
-  MINIAPP_SHORT_NAME: "watch",        // همان Short name که در BotFather ثبت کردید
-  WORKER_URL: "https://afg-sports-live-bot.peyda-help.workers.dev",
-
-  GEMINI_MODEL: "gemini-3.6-flash",
-
-  AUTO_PUBLISH_CONFIDENCE: 90,        // بالاتر از این: انتشار خودکار
-  REVIEW_CONFIDENCE: 40,              // بین این و بالا: ارسال به ادمین
-
-  // شناسه کانال‌ها را قبل از استفاده از صفحه هر کانال بررسی کنید
+  ADMIN_ID: 7566522940,
+  BOT_USERNAME: 'SimSportBot',
+  APP_SHORT_NAME: 'watch', // نام کوتاهی که در BotFather ثبت کردید
+  CHANNEL_ID: '@SimSportlive',
+  CHANNEL_NUMERIC_ID: '-1004402889429',
+  
+  // آدرس‌های یوتیوب جهت چک کردن RSS
   YOUTUBE_CHANNELS: [
-    "UCUf538Z2yL-LhT4tS24hD-A",
-    "UCqZoX98yW0E71y5f-S78g7g",
-    "UCNA34_X72xHl9C0B7z9d6yA",
-    "UCvhmP6S0ouhV_zVsW1R__tA",
-    "UCGmnsW6LecGJP7406C-nAGw",
+    'UCqnbDFdMemN41sl5f7bLmgw', // UFC
+    'UCvy57vY__a4Lp237iWk0f-Q', // ONE Championship
+    'UCV3awZSj_1nJvgD_z4a4e9A', // PFL
+    'UCX_YpI2mSiy2T_v7a2eA44w'  // ACA MMA
   ],
+  
+  HIGH_CONFIDENCE_THRESHOLD: 90,
+  MEDIUM_CONFIDENCE_THRESHOLD: 40,
+  
+  // مدل دقیق جیمینای مورد نظر شما
+  GEMINI_MODEL: 'gemini-3.6-flash'
 };
