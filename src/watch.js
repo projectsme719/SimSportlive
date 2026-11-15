@@ -1,38 +1,53 @@
-export const watchHtml = `<!DOCTYPE html>
-<html lang="fa" dir="rtl">
+export const watchHtml = `
+<!DOCTYPE html>
+<html lang="fa">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <title>پخش زنده | SimSportLive</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    html, body { margin: 0; padding: 0; background: #000; color: #fff; font-family: Tahoma, sans-serif; }
-    .bar { padding: 10px; text-align: center; font-size: 14px; background: #111; }
-    .wrap { position: relative; width: 100%; padding-top: 56.25%; }
-    iframe { position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0; }
-  </style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>پخش زنده</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; padding: 0; background-color: #000; color: #fff; font-family: sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .container { width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; }
+        iframe { width: 100%; height: 100%; border: none; }
+        .msg { font-size: 16px; color: #aaa; text-align: center; padding: 20px; }
+    </style>
 </head>
 <body>
-  <div class="bar">🔴 پخش زنده | سیم‌ورغ اسپورت 🇦🇫</div>
-  <div class="wrap">
-    <iframe id="player"
-      allow="autoplay; encrypted-media; fullscreen; picture-in-picture"
-      allowfullscreen></iframe>
-  </div>
-  <script>
-    var tg = window.Telegram && window.Telegram.WebApp;
-    if (tg) { tg.ready(); tg.expand(); }
+    <div id="player-container" class="container">
+        <div class="msg">در حال بارگذاری پخش زنده...</div>
+    </div>
 
-    var params = new URLSearchParams(window.location.search);
-    var startParam = (tg && tg.initDataUnsafe && tg.initDataUnsafe.start_param) || "";
-    var id = startParam || params.get("v") || "";
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand(); // باز کردن به صورت تمام صفحه
 
-    if (/^[A-Za-z0-9_-]{11}$/.test(id)) {
-      document.getElementById("player").src =
-        "https://www.youtube-nocookie.com/embed/" + id + "?autoplay=1&playsinline=1&rel=0";
-    } else {
-      document.querySelector(".bar").textContent = "لینک پخش نامعتبر است";
-    }
-  </script>
-</body> 
-</html>`;
+        function getVideoId() {
+            // ۱. خواندن آیدی از طریق پارامتر مینی اپ تلگرام
+            if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
+                return tg.initDataUnsafe.start_param;
+            }
+            // ۲. خواندن از آدرس مرورگر (جهت تست)
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('v') || urlParams.get('startapp');
+        }
+
+        const videoId = getVideoId();
+        const container = document.getElementById('player-container');
+
+        if (videoId) {
+            container.innerHTML = \`
+                <iframe 
+                    src="https://www.youtube-nocookie.com/embed/\${videoId}?autoplay=1&playsinline=1&rel=0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>\`;
+        } else {
+            container.innerHTML = '<div class="msg">❌ ویدیو یافت نشد یا آدرس معتبر نیست.</div>';
+        }
+    </script>
+</body>
+</html>
+`;
