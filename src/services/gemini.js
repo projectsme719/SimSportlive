@@ -1,7 +1,7 @@
 import { CONFIG } from '../config.js';
 
-const PER_CALL_TIMEOUT_MS = 10000; // حداکثر زمان هر درخواست
-const START_NEW_ATTEMPT_BEFORE_MS = 8000; // بعد از این زمان مدل بعدی امتحان نمی‌شود
+const PER_CALL_TIMEOUT_MS = 12000; // حداکثر زمان هر درخواست
+const START_NEW_ATTEMPT_BEFORE_MS = 16000; // بعد از این زمان مدل بعدی امتحان نمی‌شود
 
 function fallbackResult(error) {
   return {
@@ -14,15 +14,26 @@ function fallbackResult(error) {
   };
 }
 
-async function callModel(model, prompt, apiKey) {
+// کم کردن «تفکر» مدل برای سرعت بیشتر
+function thinkingConfigFor(model) {
+  if (model.startsWith('gemini-3')) return { thinkingLevel: 'low' };
+  if (model.startsWith('gemini-2.5-flash')) return { thinkingBudget: 0 };
+  return null;
+}
+
+async function requestOnce(model, prompt, apiKey, withThinking) {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
+  const generationConfig = { responseMimeType: 'application/json', temperature: 0.7 };
+  const thinking = withThinking ? thinkingConfigFor(model) : null;
+  if (thinking) generationConfig.thinkingConfig = thinking;
+
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
     signal: AbortSignal.timeout(PER_CALL_TIMEOUT_MS),
     body: JSON.stringify({
       contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: { responseMimeType: 'application/json', temperature: 0.7 },
+      generationConfig,
     }),
   });
   const data = await res.json();
@@ -35,6 +46,18 @@ async function callModel(model, prompt, apiKey) {
   const m = raw.match(/\{[\s\S]*\}/);
   if (!m) throw new Error('پاسخ Gemini JSON معتبر نبود');
   return JSON.parse(m[0]);
+}
+
+async function callModel(model, prompt, apiKey) {
+  try {
+    return await requestOnce(model, prompt, apiKey, true);
+  } catch (e) {
+    // اگر مدل تنظیم thinking را نپذیرفت (۴۰۰)، بدون آن تلاش کن
+    if (e.status === 400 && thinkingConfigFor(model)) {
+      return await requestOnce(model, prompt, apiKey, false);
+    }
+    throw e;
+  }
 }
 
 export async function analyzeMatchWithGemini(video, whitelist, env) {
