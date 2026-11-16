@@ -1,5 +1,9 @@
-import { CONFIG } from './config.js';
-import { checkYouTubeLiveRSS, getSingleVideoInfo } from './services/youtube.js';
+import { CONFIG, SPORTS } from './config.js';
+import {
+  checkYouTubeLiveRSS,
+  getSingleVideoInfo,
+  resolveChannel,
+} from './services/youtube.js';
 import { analyzeMatchWithGemini } from './services/gemini.js';
 import {
   publishToChannel,
@@ -9,7 +13,6 @@ import {
 } from './services/telegram.js';
 import { watchHtml } from './watch.js';
 
-// آدرس Worker را برای دکمه‌های web_app ذخیره می‌کند
 async function saveOrigin(env, origin) {
   try {
     if (env.WORKER_URL) return;
@@ -29,13 +32,9 @@ export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
 
-    // صفحه پخش داخل Mini App
     if (request.method === 'GET' && url.pathname === '/watch') {
       return new Response(watchHtml, {
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Cache-Control': 'no-store',
-        },
+        headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' },
       });
     }
 
@@ -57,7 +56,6 @@ export default {
       return new Response(await res.text(), { headers: { 'Content-Type': 'application/json' } });
     }
 
-    // وب‌هوک تلگرام
     if (request.method === 'POST' && url.pathname === '/telegram-webhook') {
       if (
         env.TELEGRAM_WEBHOOK_SECRET &&
@@ -73,7 +71,6 @@ export default {
         return new Response('Bad Request', { status: 400 });
       }
 
-      // پردازش در پس‌زمینه؛ همیشه سریع 200 برمی‌گردد تا تلگرام تکرار نکند
       ctx.waitUntil(
         (async () => {
           try {
@@ -96,6 +93,16 @@ export default {
 };
 
 // ───── پیام‌های ورودی به ربات ─────
+const HELP_TEXT =
+  '📋 دستورهای ادمین:\n\n' +
+  '• لینک لایو یوتیوب را بفرستید تا تحلیل شود\n' +
+  '/channels — فهرست کانال‌های یوتیوب\n' +
+  '/addchannel <آیدی UC... یا @handle یا لینک> — افزودن کانال\n' +
+  '/removechannel <آیدی UC...> — حذف کانال افزوده‌شده\n' +
+  '/names — فهرست نام ورزشکاران/تیم‌ها\n' +
+  '/addname <نام> — افزودن نام\n' +
+  '/removename <نام> — حذف نام';
+
 async function handleMessage(message, env) {
   const chatId = message.chat.id;
   const fromId = message.from?.id;
@@ -105,7 +112,7 @@ async function handleMessage(message, env) {
     return sendText(
       env,
       chatId,
-      '🇦🇫 به ربات سیم‌ورغ اسپورت خوش آمدید!\n\nپخش‌های زنده ورزش افغانستان را اینجا دنبال کنید.',
+      '🇦🇫 به ربات سیم‌ورغ اسپورت خوش آمدید!\n\nپخش‌های زنده ورزش افغانستان (فوتبال، فوتسال، کرکت، ورزش‌های رزمی و ورزش بانوان) را اینجا دنبال کنید.',
       {
         inline_keyboard: [
           [{ text: '📢 ورود به کانال', url: `https://t.me/${CONFIG.CHANNEL_USERNAME.replace('@', '')}` }],
@@ -114,17 +121,77 @@ async function handleMessage(message, env) {
     );
   }
 
-  // لینک دستی فقط برای ادمین
+  // بقیه امکانات فقط برای ادمین
   if (fromId !== CONFIG.ADMIN_ID) return;
+
+  if (text.startsWith('/')) return handleAdminCommand(text, chatId, env);
 
   const match = text.match(/(?:live\/|v=|youtu\.be\/)([A-Za-z0-9_-]{11})/);
   if (match) await handleManualLink(match[1], chatId, env);
 }
 
+async function handleAdminCommand(text, chatId, env) {
+  const [rawCmd, ...rest] = text.split(/\s+/);
+  const cmd = rawCmd.split('@')[0].toLowerCase();
+  const arg = rest.join(' ').trim();
+
+  try {
+    if (cmd === '/help') return sendText(env, chatId, HELP_TEXT);
+
+    if (cmd === '/channels') {
+      const extra = await getExtraChannels(env);
+      const lines = [
+        ...CONFIG.YOUTUBE_CHANNELS.map((id) => `• ${id} (ثابت)`),
+        ...extra.map((c) => `• ${c.id}${c.title ? ' — ' + c.title : ''}`),
+      ];
+      return sendText(env, chatId, `📺 کانال‌ها (${lines.length}):\n\n${lines.join('\n')}`);
+    }
+
+    if (cmd === '/addchannel') {
+      if (!arg) return sendText(env, chatId, 'مثال:\n/addchannel @AfghanistanCricketBoard');
+      const ch = await resolveChannel(arg, env.YOUTUBE_API_KEY);
+      if (!ch) return sendText(env, chatId, '❌ کانال پیدا نشد. آیدی UC...، @handle یا لینک کانال بفرستید.');
+      await env.POSTED_LIVES.put('channel:' + ch.id, ch.title || '1');
+      return sendText(env, chatId, `✅ کانال اضافه شد:\n${ch.title}\n${ch.id}`);
+    }
+
+    if (cmd === '/removechannel') {
+      const id = (arg.match(/UC[A-Za-z0-9_-]{22}/) || [])[0];
+      if (!id) return sendText(env, chatId, 'مثال:\n/removechannel UCxxxxxxxxxxxxxxxxxxxxxx');
+      if (CONFIG.YOUTUBE_CHANNELS.includes(id)) {
+        return sendText(env, chatId, '⚠️ این کانال ثابت است و باید از config.js حذف شود.');
+      }
+      await env.POSTED_LIVES.delete('channel:' + id);
+      return sendText(env, chatId, '🗑 حذف شد (اگر وجود داشت).');
+    }
+
+    if (cmd === '/names') {
+      const names = await getWhitelist(env);
+      return sendText(env, chatId, names.length ? `📋 نام‌ها (${names.length}):\n\n${names.join('\n')}` : 'فهرست خالی است.');
+    }
+
+    if (cmd === '/addname') {
+      if (!arg) return sendText(env, chatId, 'مثال:\n/addname تیم ملی کرکت افغانستان');
+      await env.ATHLETES_WHITELIST.put('fighter:' + arg.toLowerCase(), 'true');
+      return sendText(env, chatId, `✅ «${arg}» اضافه شد.`);
+    }
+
+    if (cmd === '/removename') {
+      if (!arg) return sendText(env, chatId, 'مثال:\n/removename نام');
+      await env.ATHLETES_WHITELIST.delete('fighter:' + arg.toLowerCase());
+      return sendText(env, chatId, '🗑 حذف شد (اگر وجود داشت).');
+    }
+
+    return sendText(env, chatId, HELP_TEXT);
+  } catch (e) {
+    console.error('admin command error:', e);
+    return sendText(env, chatId, `❌ خطا: ${String(e?.message || e).slice(0, 300)}`);
+  }
+}
+
 async function handleManualLink(videoId, chatId, env) {
   await sendText(env, chatId, '🔍 در حال تحلیل لینک...');
 
-  // هر مرحله جدا بررسی می‌شود تا خطا مستقیم در چت نمایش داده شود
   try {
     if (!env.YOUTUBE_API_KEY) {
       return sendText(env, chatId, '❌ سکرت YOUTUBE_API_KEY در کلودفلر تنظیم نشده است.');
@@ -136,7 +203,6 @@ async function handleManualLink(videoId, chatId, env) {
     }
 
     const whitelist = await getWhitelist(env);
-
     const ai = await analyzeMatchWithGemini(video, whitelist, env);
     if (!ai.ok) {
       await sendText(
@@ -147,9 +213,7 @@ async function handleManualLink(videoId, chatId, env) {
     }
 
     const sent = await sendAdminReview(video, ai, env);
-    if (!sent) {
-      await sendText(env, chatId, '❌ ارسال پیام بررسی ناموفق بود. لاگ Cloudflare را ببینید.');
-    }
+    if (!sent) await sendText(env, chatId, '❌ ارسال پیام بررسی ناموفق بود. لاگ Cloudflare را ببینید.');
   } catch (e) {
     console.error('handleManualLink error:', e);
     await sendText(env, chatId, `❌ خطا: ${String(e?.message || e).slice(0, 400)}`);
@@ -159,29 +223,41 @@ async function handleManualLink(videoId, chatId, env) {
 // ───── بررسی خودکار لایوها ─────
 async function runLiveCheckProcess(env) {
   const whitelist = await getWhitelist(env);
+  const channels = await getAllChannelIds(env);
 
-  for (const channelId of CONFIG.YOUTUBE_CHANNELS) {
-    const videos = await checkYouTubeLiveRSS(channelId, env.YOUTUBE_API_KEY);
+  // همه کانال‌ها هم‌زمان بررسی می‌شوند
+  const results = await Promise.allSettled(
+    channels.map((id) => checkYouTubeLiveRSS(id, env.YOUTUBE_API_KEY))
+  );
 
-    for (const video of videos) {
+  const seenNow = new Set();
+  for (const r of results) {
+    if (r.status !== 'fulfilled') continue;
+
+    for (const video of r.value) {
+      if (seenNow.has(video.id)) continue;
+      seenNow.add(video.id);
+
       try {
-        // جلوگیری از پردازش تکراری
         if (await env.POSTED_LIVES.get('posted:' + video.id)) continue;
         if (await env.POSTED_LIVES.get('pending:' + video.id)) continue;
         if (await env.POSTED_LIVES.get('seen:' + video.id)) continue;
 
         const ai = await analyzeMatchWithGemini(video, whitelist, env);
+        if (!ai.ok) continue; // دور بعد دوباره تلاش می‌شود
 
-        // خطای Gemini: ثبت نمی‌کنیم تا دور بعد دوباره تلاش شود
-        if (!ai.ok) continue;
+        // ورزش غیرفعال
+        if (!CONFIG.ENABLED_SPORTS.includes(ai.sport)) {
+          await env.POSTED_LIVES.put('seen:' + video.id, '1', { expirationTtl: 10800 });
+          continue;
+        }
 
-        if (ai.isAfghan && ai.confidence >= CONFIG.AUTO_PUBLISH_CONFIDENCE && ai.caption) {
-          const ok = await publishToChannel(video, ai.caption, env);
+        if (ai.isAfghan && ai.confidence >= CONFIG.AUTO_PUBLISH_CONFIDENCE) {
+          const ok = await publishToChannel(video, ai, env);
           if (ok) await env.POSTED_LIVES.put('posted:' + video.id, '1', { expirationTtl: 604800 });
         } else if (ai.isAfghan && ai.confidence >= CONFIG.REVIEW_CONFIDENCE) {
           await sendAdminReview(video, ai, env);
         } else {
-          // غیرافغانی: سه ساعت دیگر بررسی نشود تا سهمیه Gemini هدر نرود
           await env.POSTED_LIVES.put('seen:' + video.id, '1', { expirationTtl: 10800 });
         }
       } catch (e) {
@@ -191,8 +267,23 @@ async function runLiveCheckProcess(env) {
   }
 }
 
-// ───── لیست سفید از KV ─────
+// ───── کمکی‌ها ─────
 async function getWhitelist(env) {
   const out = await env.ATHLETES_WHITELIST.list({ prefix: 'fighter:' });
   return out.keys.map((k) => k.name.replace('fighter:', ''));
+}
+
+async function getExtraChannels(env) {
+  const out = await env.POSTED_LIVES.list({ prefix: 'channel:' });
+  const items = [];
+  for (const k of out.keys) {
+    const title = await env.POSTED_LIVES.get(k.name);
+    items.push({ id: k.name.replace('channel:', ''), title: title && title !== '1' ? title : '' });
+  }
+  return items;
+}
+
+async function getAllChannelIds(env) {
+  const extra = await getExtraChannels(env);
+  return [...new Set([...CONFIG.YOUTUBE_CHANNELS, ...extra.map((c) => c.id)])];
 }
