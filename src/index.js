@@ -1,10 +1,11 @@
-import { CONFIG, SPORTS } from './config.js';
+import { CONFIG } from './config.js';
 import {
   checkYouTubeLiveRSS,
   getSingleVideoInfo,
   resolveChannel,
 } from './services/youtube.js';
 import { analyzeMatchWithGemini } from './services/gemini.js';
+import { hasMatchStarted } from './services/matchstart.js';
 import {
   publishToChannel,
   sendAdminReview,
@@ -97,7 +98,8 @@ const HELP_TEXT =
   '📋 دستورهای ادمین:\n\n' +
   '• لینک لایو یوتیوب را بفرستید تا تحلیل شود\n' +
   '/channels — فهرست کانال‌های یوتیوب\n' +
-  '/addchannel <آیدی UC... یا @handle یا لینک> — افزودن کانال\n' +
+  '/addchannel <آیدی UC... یا @handle یا لینک کانال/ویدیو> — افزودن رسانه افغانی معتبر\n' +
+  '/addchannel <...> global — افزودن کانال جهانی (فقط در صورت وجود افغان منتشر می‌شود)\n' +
   '/removechannel <آیدی UC...> — حذف کانال افزوده‌شده\n' +
   '/names — فهرست نام ورزشکاران/تیم‌ها\n' +
   '/addname <نام> — افزودن نام\n' +
@@ -133,26 +135,38 @@ async function handleMessage(message, env) {
 async function handleAdminCommand(text, chatId, env) {
   const [rawCmd, ...rest] = text.split(/\s+/);
   const cmd = rawCmd.split('@')[0].toLowerCase();
-  const arg = rest.join(' ').trim();
+  let arg = rest.join(' ').trim();
 
   try {
     if (cmd === '/help') return sendText(env, chatId, HELP_TEXT);
 
     if (cmd === '/channels') {
+      await seedDefaultChannels(env);
       const extra = await getExtraChannels(env);
       const lines = [
         ...CONFIG.YOUTUBE_CHANNELS.map((id) => `• ${id} (ثابت)`),
-        ...extra.map((c) => `• ${c.id}${c.title ? ' — ' + c.title : ''}`),
+        ...extra.map((c) => `• ${c.trusted ? '🇦🇫 ' : ''}${c.id}${c.title ? ' — ' + c.title : ''}`),
       ];
-      return sendText(env, chatId, `📺 کانال‌ها (${lines.length}):\n\n${lines.join('\n')}`);
+      return sendText(
+        env,
+        chatId,
+        `📺 کانال‌ها (${lines.length}):\n🇦🇫 = رسانه معتبر افغانی\n\n${lines.join('\n')}`
+      );
     }
 
     if (cmd === '/addchannel') {
-      if (!arg) return sendText(env, chatId, 'مثال:\n/addchannel @AfghanistanCricketBoard');
+      if (!arg) return sendText(env, chatId, 'مثال:\n/addchannel @arianasport\n/addchannel @SomeGlobalChannel global');
+      let trusted = true;
+      if (/\s+global$/i.test(arg)) {
+        trusted = false;
+        arg = arg.replace(/\s+global$/i, '').trim();
+      }
       const ch = await resolveChannel(arg, env.YOUTUBE_API_KEY);
-      if (!ch) return sendText(env, chatId, '❌ کانال پیدا نشد. آیدی UC...، @handle یا لینک کانال بفرستید.');
-      await env.POSTED_LIVES.put('channel:' + ch.id, ch.title || '1');
-      return sendText(env, chatId, `✅ کانال اضافه شد:\n${ch.title}\n${ch.id}`);
+      if (!ch || !ch.id) {
+        return sendText(env, chatId, '❌ کانال پیدا نشد. آیدی UC...، @handle، لینک کانال یا لینک یک ویدیوی آن را بفرستید.');
+      }
+      await env.POSTED_LIVES.put('channel:' + ch.id, JSON.stringify({ title: ch.title, trusted }));
+      return sendText(env, chatId, `✅ کانال اضافه شد ${trusted ? '(🇦🇫 معتبر)' : '(جهانی)'}:\n${ch.title}\n${ch.id}`);
     }
 
     if (cmd === '/removechannel') {
@@ -202,6 +216,9 @@ async function handleManualLink(videoId, chatId, env) {
       return sendText(env, chatId, '❌ اطلاعات این ویدیو پیدا نشد (آیدی یا YOUTUBE_API_KEY را بررسی کنید).');
     }
 
+    const channels = await getAllChannels(env);
+    video.trusted = channels.get(video.channelId)?.trusted === true;
+
     const whitelist = await getWhitelist(env);
     const ai = await analyzeMatchWithGemini(video, whitelist, env);
     if (!ai.ok) {
@@ -212,6 +229,7 @@ async function handleManualLink(videoId, chatId, env) {
       );
     }
 
+    // لینک دستی ادمین: بدون صبر برای شروع مسابقه
     const sent = await sendAdminReview(video, ai, env);
     if (!sent) await sendText(env, chatId, '❌ ارسال پیام بررسی ناموفق بود. لاگ Cloudflare را ببینید.');
   } catch (e) {
@@ -222,47 +240,119 @@ async function handleManualLink(videoId, chatId, env) {
 
 // ───── بررسی خودکار لایوها ─────
 async function runLiveCheckProcess(env) {
+  await seedDefaultChannels(env);
+
   const whitelist = await getWhitelist(env);
-  const channels = await getAllChannelIds(env);
+  const channels = [...(await getAllChannels(env)).entries()]; // [[id, {trusted}], ...]
 
   // همه کانال‌ها هم‌زمان بررسی می‌شوند
   const results = await Promise.allSettled(
-    channels.map((id) => checkYouTubeLiveRSS(id, env.YOUTUBE_API_KEY))
+    channels.map(([id]) => checkYouTubeLiveRSS(id, env.YOUTUBE_API_KEY))
   );
 
   const seenNow = new Set();
-  for (const r of results) {
-    if (r.status !== 'fulfilled') continue;
+  for (let i = 0; i < results.length; i++) {
+    if (results[i].status !== 'fulfilled') continue;
+    const trusted = channels[i][1].trusted === true;
 
-    for (const video of r.value) {
+    for (const video of results[i].value) {
       if (seenNow.has(video.id)) continue;
       seenNow.add(video.id);
+      video.trusted = trusted;
 
       try {
-        if (await env.POSTED_LIVES.get('posted:' + video.id)) continue;
-        if (await env.POSTED_LIVES.get('pending:' + video.id)) continue;
-        if (await env.POSTED_LIVES.get('seen:' + video.id)) continue;
-
-        const ai = await analyzeMatchWithGemini(video, whitelist, env);
-        if (!ai.ok) continue; // دور بعد دوباره تلاش می‌شود
-
-        // ورزش غیرفعال
-        if (!CONFIG.ENABLED_SPORTS.includes(ai.sport)) {
-          await env.POSTED_LIVES.put('seen:' + video.id, '1', { expirationTtl: 10800 });
-          continue;
-        }
-
-        if (ai.isAfghan && ai.confidence >= CONFIG.AUTO_PUBLISH_CONFIDENCE) {
-          const ok = await publishToChannel(video, ai, env);
-          if (ok) await env.POSTED_LIVES.put('posted:' + video.id, '1', { expirationTtl: 604800 });
-        } else if (ai.isAfghan && ai.confidence >= CONFIG.REVIEW_CONFIDENCE) {
-          await sendAdminReview(video, ai, env);
-        } else {
-          await env.POSTED_LIVES.put('seen:' + video.id, '1', { expirationTtl: 10800 });
-        }
+        await processLiveVideo(video, whitelist, env);
       } catch (e) {
         console.error(`Error processing ${video.id}:`, e);
       }
+    }
+  }
+}
+
+async function processLiveVideo(video, whitelist, env) {
+  const kv = env.POSTED_LIVES;
+  const id = video.id;
+
+  if (await kv.get('posted:' + id)) return;
+  if (await kv.get('pending:' + id)) return;
+  if (await kv.get('seen:' + id)) return;
+
+  // ۱) تحلیل متنی (نتیجه برای لایوهای در انتظار ذخیره می‌شود تا Gemini تکراری صدا نشود)
+  let ai = null;
+  const cached = await kv.get('wait:' + id);
+  if (cached) {
+    try {
+      ai = JSON.parse(cached).ai;
+    } catch {}
+  }
+  if (!ai) {
+    ai = await analyzeMatchWithGemini(video, whitelist, env);
+    if (!ai.ok) return; // دور بعد دوباره تلاش می‌شود
+  }
+
+  // ۲) مرتبط بودن
+  const relevant =
+    ai.isSports &&
+    ai.isAfghan &&
+    CONFIG.ENABLED_SPORTS.includes(ai.sport) &&
+    ai.confidence >= CONFIG.REVIEW_CONFIDENCE;
+  if (!relevant) {
+    await kv.delete('wait:' + id);
+    await kv.put('seen:' + id, '1', { expirationTtl: 10800 });
+    return;
+  }
+
+  // ۳) فقط لایوهایی که داخل تلگرام قابل پخش‌اند
+  if (CONFIG.REQUIRE_EMBEDDABLE && video.embeddable === false) {
+    await kv.delete('wait:' + id);
+    await kv.put('seen:' + id, '1', { expirationTtl: 43200 });
+    if (CONFIG.NOTIFY_ADMIN_NOT_EMBEDDABLE) {
+      await sendText(
+        env,
+        CONFIG.ADMIN_ID,
+        `🚫 لایو افغانی پیدا شد ولی پخش داخل تلگرام برایش ممکن نیست (امبد ممنوع یا محدود)، پس منتشر نشد:\n\n${video.title}\n${video.channelTitle}\n${video.link}`
+      );
+    }
+    return;
+  }
+
+  // ۴) صبر تا شروع واقعی مسابقه
+  const start = await hasMatchStarted(video, env);
+  if (!start.started) {
+    await kv.put('wait:' + id, JSON.stringify({ ai }), { expirationTtl: 43200 });
+    return;
+  }
+
+  // ۵) انتشار
+  await kv.delete('wait:' + id);
+  if (ai.confidence >= CONFIG.AUTO_PUBLISH_CONFIDENCE) {
+    const ok = await publishToChannel(video, ai, env);
+    if (ok) await kv.put('posted:' + id, '1', { expirationTtl: 604800 });
+  } else {
+    await sendAdminReview(video, ai, env);
+  }
+}
+
+// ───── رسانه‌های معتبر پیش‌فرض (یک‌بار پیدا و ذخیره می‌شوند) ─────
+async function seedDefaultChannels(env) {
+  const kv = env.POSTED_LIVES;
+  for (const entry of CONFIG.SEED_CHANNELS || []) {
+    try {
+      if (await kv.get('seeded:' + entry)) continue;
+      if (await kv.get('seedfail:' + entry)) continue; // ۶ ساعت صبر بعد از شکست
+
+      const ch = await resolveChannel(entry, env.YOUTUBE_API_KEY);
+      if (!ch || !ch.id) {
+        await kv.put('seedfail:' + entry, '1', { expirationTtl: 21600 });
+        console.error('seed failed:', entry);
+        continue;
+      }
+      if (!(await kv.get('channel:' + ch.id))) {
+        await kv.put('channel:' + ch.id, JSON.stringify({ title: ch.title, trusted: true }));
+      }
+      await kv.put('seeded:' + entry, '1');
+    } catch (e) {
+      console.error('seed error:', entry, e);
     }
   }
 }
@@ -273,17 +363,28 @@ async function getWhitelist(env) {
   return out.keys.map((k) => k.name.replace('fighter:', ''));
 }
 
+function parseChannelValue(v) {
+  try {
+    const o = JSON.parse(v);
+    if (o && typeof o === 'object') return { title: o.title || '', trusted: o.trusted === true };
+  } catch {}
+  return { title: v && v !== '1' ? v : '', trusted: false };
+}
+
 async function getExtraChannels(env) {
   const out = await env.POSTED_LIVES.list({ prefix: 'channel:' });
   const items = [];
   for (const k of out.keys) {
-    const title = await env.POSTED_LIVES.get(k.name);
-    items.push({ id: k.name.replace('channel:', ''), title: title && title !== '1' ? title : '' });
+    const v = await env.POSTED_LIVES.get(k.name);
+    items.push({ id: k.name.replace('channel:', ''), ...parseChannelValue(v) });
   }
   return items;
 }
 
-async function getAllChannelIds(env) {
-  const extra = await getExtraChannels(env);
-  return [...new Set([...CONFIG.YOUTUBE_CHANNELS, ...extra.map((c) => c.id)])];
+// Map: channelId -> {trusted}
+async function getAllChannels(env) {
+  const map = new Map();
+  for (const id of CONFIG.YOUTUBE_CHANNELS) map.set(id, { trusted: false });
+  for (const c of await getExtraChannels(env)) map.set(c.id, { trusted: c.trusted });
+  return map;
 }
