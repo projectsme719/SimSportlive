@@ -1,4 +1,4 @@
-import { CONFIG, SPORTS, WOMEN_TAG } from '../config.js';
+import { CONFIG, SPORTS, LANGUAGES, WOMEN_TAG } from '../config.js';
 
 const esc = (s) =>
   String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -55,15 +55,17 @@ async function adminPreviewButton(video, env) {
   return { text: '👁 پیش‌نمایش پخش', url: video.embeddable === false ? video.link : miniAppUrl(video.id) };
 }
 
-// ساخت کپشن نهایی کانال: عنوان ورزش + متن دری + هشتگ‌ها
+// ساخت کپشن نهایی کانال: عنوان ورزش + زبان پخش + متن دری + هشتگ‌ها
 export function buildCaption(ai) {
   const sport = SPORTS[ai.sport] || SPORTS.other;
   const head = `${sport.emoji} <b>پخش زنده ${esc(sport.label)}${ai.isWomen ? ' بانوان' : ''}</b>`;
+  const langName = LANGUAGES[ai.language] || '';
+  const langLine = langName ? `\n🎙 زبان پخش: <b>${esc(langName)}</b>` : '';
   const body =
     String(ai.caption || '').trim() ||
     'هم‌اکنون می‌توانید این مسابقه را مستقیماً در تلگرام تماشا کنید 👇';
   const tags = [sport.tag, ai.isWomen ? WOMEN_TAG : null, '#افغانستان'].filter(Boolean).join(' ');
-  return `${head}\n\n${esc(body.slice(0, 600))}\n\n${tags}\n${esc(CONFIG.CHANNEL_USERNAME)}`;
+  return `${head}${langLine}\n\n${esc(body.slice(0, 600))}\n\n${tags}\n${esc(CONFIG.CHANNEL_USERNAME)}`;
 }
 
 export async function sendText(env, chatId, text, replyMarkup) {
@@ -100,8 +102,13 @@ export async function sendAdminReview(video, ai, env) {
     `📌 <b>عنوان:</b> ${esc(String(video.title).slice(0, 150))}\n` +
     `📺 <b>کانال:</b> ${esc(String(video.channelTitle).slice(0, 60))}\n` +
     `${sport.emoji} <b>ورزش:</b> ${esc(sport.label)}${ai.isWomen ? ' (بانوان 🚺)' : ''}\n` +
+    `🎙 <b>زبان:</b> ${esc(LANGUAGES[ai.language] || 'نامشخص')}\n` +
     `🎯 <b>اطمینان AI:</b> ${ai.confidence}%\n` +
-    `🇦🇫 <b>افغانی:</b> ${ai.isAfghan ? 'بله' : 'خیر'}\n\n` +
+    `🇦🇫 <b>افغانی:</b> ${ai.isAfghan ? 'بله' : 'خیر'}\n` +
+    (video.embeddable === false
+      ? `🚫 <b>پخش داخل تلگرام ممکن نیست</b> (امبد ممنوع/محدود)؛ دکمه کانال به یوتیوب می‌رود.\n`
+      : '') +
+    `\n` +
     `📝 <b>کپشن پیشنهادی:</b>\n${esc(String(ai.caption || '— (Gemini پاسخ نداد)').slice(0, 420))}`;
 
   const keyboard = {
