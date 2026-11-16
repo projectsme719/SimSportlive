@@ -1,4 +1,4 @@
-import { CONFIG } from '../config.js';
+import { CONFIG, SPORTS, WOMEN_TAG } from '../config.js';
 
 const esc = (s) =>
   String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -19,12 +19,11 @@ async function tg(env, method, body) {
   }
 }
 
-// لینک مستقیم Mini App (برای پست کانال). نیاز به ساخت Mini App در BotFather با Short name = watch
+// لینک مستقیم Mini App (برای پست کانال)
 export function miniAppUrl(videoId) {
   return `https://t.me/${CONFIG.BOT_USERNAME}/${CONFIG.APP_SHORT_NAME}?startapp=${videoId}`;
 }
 
-// آدرس Worker: از متغیر WORKER_URL یا مقداری که از وب‌هوک ذخیره شده
 async function getOrigin(env) {
   if (env.WORKER_URL) return env.WORKER_URL.replace(/\/$/, '');
   try {
@@ -34,7 +33,6 @@ async function getOrigin(env) {
   }
 }
 
-// تامبنیل: اگر maxres نبود، hqdefault
 async function pickThumbnail(videoId) {
   const maxres = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
   try {
@@ -44,19 +42,28 @@ async function pickThumbnail(videoId) {
   return `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 }
 
-// دکمه کانال: فقط لینک مستقیم Mini App (در کانال web_app مجاز نیست)
 function channelWatchButton(video) {
   const url = video.embeddable === false ? video.link : miniAppUrl(video.id);
   return { text: '👁 تماشای زنده', url };
 }
 
-// دکمه پیش‌نمایش ادمین (چت خصوصی): مستقیم داخل تلگرام باز می‌شود
 async function adminPreviewButton(video, env) {
   const origin = await getOrigin(env);
   if (origin && video.embeddable !== false) {
     return { text: '👁 پیش‌نمایش پخش', web_app: { url: `${origin}/watch?v=${video.id}` } };
   }
   return { text: '👁 پیش‌نمایش پخش', url: video.embeddable === false ? video.link : miniAppUrl(video.id) };
+}
+
+// ساخت کپشن نهایی کانال: عنوان ورزش + متن دری + هشتگ‌ها
+export function buildCaption(ai) {
+  const sport = SPORTS[ai.sport] || SPORTS.other;
+  const head = `${sport.emoji} <b>پخش زنده ${esc(sport.label)}${ai.isWomen ? ' بانوان' : ''}</b>`;
+  const body =
+    String(ai.caption || '').trim() ||
+    'هم‌اکنون می‌توانید این مسابقه را مستقیماً در تلگرام تماشا کنید 👇';
+  const tags = [sport.tag, ai.isWomen ? WOMEN_TAG : null, '#افغانستان'].filter(Boolean).join(' ');
+  return `${head}\n\n${esc(body.slice(0, 600))}\n\n${tags}\n${esc(CONFIG.CHANNEL_USERNAME)}`;
 }
 
 export async function sendText(env, chatId, text, replyMarkup) {
@@ -67,12 +74,12 @@ export async function sendText(env, chatId, text, replyMarkup) {
   });
 }
 
-export async function publishToChannel(video, caption, env) {
+export async function publishToChannel(video, ai, env) {
   const photo = await pickThumbnail(video.id);
   const res = await tg(env, 'sendPhoto', {
     chat_id: CONFIG.CHANNEL_ID,
     photo,
-    caption: esc(String(caption).slice(0, 800)),
+    caption: buildCaption(ai),
     parse_mode: 'HTML',
     reply_markup: { inline_keyboard: [[channelWatchButton(video)]] },
   });
@@ -81,20 +88,21 @@ export async function publishToChannel(video, caption, env) {
 
 // true اگر پیام به ادمین رسید
 export async function sendAdminReview(video, ai, env) {
-  // ذخیره موقت اطلاعات؛ callback_data محدود به ۶۴ بایت است
   await env.POSTED_LIVES.put(
     'pending:' + video.id,
     JSON.stringify({ video, ai }),
     { expirationTtl: 86400 }
   );
 
+  const sport = SPORTS[ai.sport] || SPORTS.other;
   const text =
     `⚠️ <b>پخش زنده جدید جهت بررسی</b>\n\n` +
     `📌 <b>عنوان:</b> ${esc(String(video.title).slice(0, 150))}\n` +
     `📺 <b>کانال:</b> ${esc(String(video.channelTitle).slice(0, 60))}\n` +
+    `${sport.emoji} <b>ورزش:</b> ${esc(sport.label)}${ai.isWomen ? ' (بانوان 🚺)' : ''}\n` +
     `🎯 <b>اطمینان AI:</b> ${ai.confidence}%\n` +
     `🇦🇫 <b>افغانی:</b> ${ai.isAfghan ? 'بله' : 'خیر'}\n\n` +
-    `📝 <b>کپشن پیشنهادی:</b>\n${esc(String(ai.caption || '— (Gemini پاسخ نداد)').slice(0, 450))}`;
+    `📝 <b>کپشن پیشنهادی:</b>\n${esc(String(ai.caption || '— (Gemini پاسخ نداد)').slice(0, 420))}`;
 
   const keyboard = {
     inline_keyboard: [
@@ -118,7 +126,6 @@ export async function sendAdminReview(video, ai, env) {
     reply_markup: keyboard,
   });
 
-  // اگر عکس نشد، حداقل متن برود
   if (!res.ok) {
     res = await tg(env, 'sendMessage', {
       chat_id: CONFIG.ADMIN_ID,
@@ -153,10 +160,7 @@ export async function handleAdminCallback(cb, env) {
     });
 
   if (action === 'app') {
-    const caption =
-      ai.caption ||
-      `🔥 پخش زنده ورزشی\n\nهم‌اکنون می‌توانید این مسابقه را مستقیماً در تلگرام تماشا کنید 👇`;
-    const ok = await publishToChannel(video, caption, env);
+    const ok = await publishToChannel(video, ai, env);
     if (!ok) return answer('❌ انتشار ناموفق (ربات ادمین کانال است؟)', true);
     await env.POSTED_LIVES.put('posted:' + videoId, '1', { expirationTtl: 604800 });
     await env.POSTED_LIVES.delete('pending:' + videoId);
