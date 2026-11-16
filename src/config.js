@@ -5,6 +5,7 @@ export const CONFIG = {
   CHANNEL_USERNAME: '@SimSportlive',
   CHANNEL_ID: '@SimSportlive', // یا '-1004402889429'
 
+  // کانال‌های ثابت یوتیوب. کانال‌های بیشتر را با دستور /addchannel از داخل ربات اضافه کنید
   YOUTUBE_CHANNELS: [
     'UCqnbDFdMemN41sl5f7bLmgw',
     'UCvy57vY__a4Lp237iWk0f-Q',
@@ -16,7 +17,20 @@ export const CONFIG = {
   AUTO_PUBLISH_CONFIDENCE: 85, // بالاتر از این: انتشار خودکار
   REVIEW_CONFIDENCE: 50, // بین این و بالا: ارسال برای تایید ادمین
 
+  // ورزش‌هایی که پردازش می‌شوند (هر کدام را نخواستید از لیست حذف کنید)
+  ENABLED_SPORTS: ['mma', 'football', 'futsal', 'cricket', 'other'],
+
   // مدل‌ها به ترتیب امتحان می‌شوند (اگر اولی وجود نداشت/بازنشسته شد، بعدی)
   GEMINI_MODEL_FALLBACKS: ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-2.5-flash'],
 };
 
+// نام نمایشی، ایموجی و هشتگ هر ورزش
+export const SPORTS = {
+  mma: { label: 'ورزش‌های رزمی', emoji: '🥊', tag: '#رزمی' },
+  football: { label: 'فوتبال', emoji: '⚽', tag: '#فوتبال' },
+  futsal: { label: 'فوتسال', emoji: '🥅', tag: '#فوتسال' },
+  cricket: { label: 'کرکت', emoji: '🏏', tag: '#کرکت' },
+  other: { label: 'ورزش', emoji: '🏆', tag: '#ورزش' },
+};
+
+export const WOMEN_TAG = '#ورزش_بانوان';
