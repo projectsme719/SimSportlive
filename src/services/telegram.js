@@ -3,6 +3,18 @@ import { CONFIG, SPORTS, LANGUAGES, WOMEN_TAG } from '../config.js';
 const esc = (s) =>
   String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
+export async function tgApi(env, method, body) {
+  return tg(env, method, body);
+}
+
+export function answerCb(env, callbackId, text = '', alert = false) {
+  return tg(env, 'answerCallbackQuery', {
+    callback_query_id: callbackId,
+    ...(text ? { text } : {}),
+    show_alert: alert,
+  });
+}
+
 async function tg(env, method, body) {
   try {
     const res = await fetch(`https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/${method}`, {
@@ -85,6 +97,28 @@ export async function publishToChannel(video, ai, env) {
     parse_mode: 'HTML',
     reply_markup: { inline_keyboard: [[channelWatchButton(video)]] },
   });
+
+  const messageId = res.result?.message_id;
+  if (res.ok && messageId) {
+    // ثبت پست فعال تا بعد از پایان مسابقه ویرایش شود
+    try {
+      await env.POSTED_LIVES.put(
+        'active:' + video.id,
+        JSON.stringify({
+          messageId,
+          chatId: CONFIG.CHANNEL_ID,
+          title: video.title,
+          channelTitle: video.channelTitle,
+          sport: ai.sport,
+          isWomen: ai.isWomen === true,
+          postedAt: Date.now(),
+        }),
+        { expirationTtl: 259200 }
+      );
+    } catch (e) {
+      console.error('active put error:', e);
+    }
+  }
   return res.ok === true;
 }
 
