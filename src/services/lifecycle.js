@@ -17,6 +17,22 @@ export function buildEndedCaption(rec) {
   );
 }
 
+// مسابقه تقویم بعد از پایان پخش «تمام‌شده» می‌شود (لینک زنده از برنامه عمومی حذف می‌شود)
+async function closeCalendarEntry(env, videoId) {
+  try {
+    if (!env.MATCH_CALENDAR) return;
+    const id = await env.MATCH_CALENDAR.get('byvideo:' + videoId);
+    const raw = await env.MATCH_CALENDAR.get('match:' + (id || videoId));
+    if (!raw) return;
+    const rec = JSON.parse(raw);
+    rec.status = 'done';
+    const ttl = Math.max(120, Math.round((rec.startAt - Date.now()) / 1000) + 3 * 86400);
+    await env.MATCH_CALENDAR.put('match:' + rec.id, JSON.stringify(rec), { expirationTtl: ttl });
+  } catch (e) {
+    console.error('closeCalendarEntry error:', e);
+  }
+}
+
 // ویرایش پست کانال + منقضی کردن لینک Mini App
 export async function finalizePost(env, id, rec) {
   const res = await tgApi(env, 'editMessageCaption', {
@@ -29,6 +45,7 @@ export async function finalizePost(env, id, rec) {
   // حتی اگر ویرایش نشد (مثلاً پست پاک شده)، لینک Mini App منقضی می‌شود
   await env.POSTED_LIVES.put('ended:' + id, '1', { expirationTtl: 2592000 });
   await env.POSTED_LIVES.delete('active:' + id);
+  await closeCalendarEntry(env, id);
   return res.ok === true || /not modified/i.test(res.description || '');
 }
 
