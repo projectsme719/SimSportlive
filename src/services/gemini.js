@@ -12,6 +12,7 @@ function fallbackResult(error) {
     sport: 'other',
     isWomen: false,
     language: 'unknown',
+    calendarId: null,
     fighterName: '',
     caption: '',
     error: error || '',
@@ -82,8 +83,11 @@ async function runGemini(parts, env) {
   return { ok: false, error: lastError };
 }
 
-export async function analyzeMatchWithGemini(video, whitelist, env) {
+export async function analyzeMatchWithGemini(video, whitelist, env, candidates = []) {
   const names = (whitelist || []).slice(0, 200).join(', ');
+  const calList = candidates.length
+    ? candidates.map((c) => `${c.id} | ${c.title} | ${c.sport}`).join('\n')
+    : '';
 
   const prompt = `
 شما گزارشگر ورزشی یک کانال تلگرام افغانستان هستید.
@@ -96,7 +100,7 @@ export async function analyzeMatchWithGemini(video, whitelist, env) {
 کانال یک رسانه معتبر افغانستانی است: ${video.trusted ? 'بله' : 'خیر'}
 زبان صوتی ثبت‌شده در یوتیوب (اگر باشد): ${video.audioLanguage || 'نامشخص'}
 فهرست ورزشکاران و تیم‌های افغان شناخته‌شده: ${names || 'خالی'}
-</data>
+${calList ? `مسابقه‌های ثبت‌شده در تقویم (شناسه | عنوان | ورزش):\n${calList}\n` : ''}</data>
 
 وظایف:
 ۱. isSports: آیا این پخش زنده یک مسابقه یا رویداد ورزشی است؟ (اخبار، برنامه‌های سرگرمی، سیاسی یا استودیوی عمومی ورزشی نیست.)
@@ -107,9 +111,10 @@ export async function analyzeMatchWithGemini(video, whitelist, env) {
 ۶. language: زبان گزارش/پخش بر اساس عنوان، توضیحات، نام کانال و زبان ثبت‌شده؛ یکی از dari (دری)، pashto (پشتو)، english، arabic، urdu، hindi، turkish، uzbek، other یا unknown. اگر مطمئن نیستید unknown بگذارید و حدس نزنید.
 ۷. caption: متنی هیجان‌انگیز به زبان دری/فارسی متناسب با همان ورزش، حداکثر ۴ سطر و کمتر از ۵۰۰ حرف، با ایموجی مناسب. هیچ حرف انگلیسی در caption نباشد و از علامت‌های ستاره، زیرخط و کروشه استفاده نکنید. نام ورزشکار یا تیم را به فارسی بنویسید.
 ۸. fighterName: نام ورزشکار یا تیم افغان (یا نام رویداد).
+۹. calendarId: اگر مسابقه‌های ثبت‌شده در تقویم وجود دارد و این پخش دقیقاً با یکی از آن‌ها یکی است، شناسه‌اش را بنویسید؛ در غیر این صورت null.
 
 فقط JSON برگردانید:
-{"isSports": true, "sport": "cricket", "isWomen": false, "isAfghan": true, "confidence": 95, "language": "dari", "fighterName": "تیم ملی افغانستان", "caption": "متن دری"}
+{"isSports": true, "sport": "cricket", "isWomen": false, "isAfghan": true, "confidence": 95, "language": "dari", "calendarId": null, "fighterName": "تیم ملی افغانستان", "caption": "متن دری"}
 `;
 
   const r = await runGemini([{ text: prompt }], env);
@@ -127,6 +132,7 @@ export async function analyzeMatchWithGemini(video, whitelist, env) {
     sport,
     isWomen: d.isWomen === true,
     language,
+    calendarId: candidates.some((c) => c.id === d.calendarId) ? d.calendarId : null,
     fighterName: String(d.fighterName || '').slice(0, 100),
     caption: String(d.caption || '').slice(0, 600),
   };
