@@ -88,6 +88,26 @@ export async function sendText(env, chatId, text, replyMarkup) {
   });
 }
 
+// بعد از انتشار پست زنده: مسابقه تقویم «زنده» می‌شود و پیام یادآوری پاک می‌شود
+async function afterPublish(env, videoId) {
+  try {
+    if (!env.MATCH_CALENDAR) return;
+    const id = await env.MATCH_CALENDAR.get('byvideo:' + videoId);
+    const raw = await env.MATCH_CALENDAR.get('match:' + (id || videoId));
+    if (!raw) return;
+    const rec = JSON.parse(raw);
+    rec.status = 'live';
+    if (rec.announceMsgId) {
+      await tg(env, 'deleteMessage', { chat_id: CONFIG.CHANNEL_ID, message_id: rec.announceMsgId });
+      rec.announceMsgId = null;
+    }
+    const ttl = Math.max(120, Math.round((rec.startAt - Date.now()) / 1000) + 3 * 86400);
+    await env.MATCH_CALENDAR.put('match:' + rec.id, JSON.stringify(rec), { expirationTtl: ttl });
+  } catch (e) {
+    console.error('afterPublish error:', e);
+  }
+}
+
 export async function publishToChannel(video, ai, env) {
   const photo = await pickThumbnail(video.id);
   const res = await tg(env, 'sendPhoto', {
@@ -100,6 +120,7 @@ export async function publishToChannel(video, ai, env) {
 
   const messageId = res.result?.message_id;
   if (res.ok && messageId) {
+        await afterPublish(env, video.id);
     // ثبت پست فعال تا بعد از پایان مسابقه ویرایش شود
     try {
       await env.POSTED_LIVES.put(
