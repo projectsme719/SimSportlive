@@ -13,6 +13,7 @@ function mapItem(item) {
     title: item.snippet?.title || '',
     description: item.snippet?.description || '',
     channelTitle: item.snippet?.channelTitle || '',
+    liveState: item.snippet?.liveBroadcastContent || '',
     audioLanguage: item.snippet?.defaultAudioLanguage || item.snippet?.defaultLanguage || '',
     scheduledStartTime: ld.scheduledStartTime || '',
     actualStartTime: ld.actualStartTime || '',
@@ -25,22 +26,23 @@ function mapItem(item) {
 
 const PARTS = 'snippet,liveStreamingDetails,status,contentDetails';
 
-// همه لایوهای در حال پخش یک کانال را برمی‌گرداند (آرایه)
-export async function checkYouTubeLiveRSS(channelId, apiKey) {
+// لایوهای در حال پخش + لایوهای زمان‌بندی‌شده یک کانال: {live, upcoming}
+export async function checkChannelStreams(channelId, apiKey) {
+  const empty = { live: [], upcoming: [] };
   try {
     const rssRes = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`, {
       signal: AbortSignal.timeout(8000),
     });
     if (!rssRes.ok) {
       console.error(`RSS ${channelId} status ${rssRes.status}`);
-      return [];
+      return empty;
     }
 
     const xml = await rssRes.text();
     const ids = [...xml.matchAll(/<yt:videoId>([^<]+)<\/yt:videoId>/g)]
-      .slice(0, 6)
+      .slice(0, 15)
       .map((m) => m[1]);
-    if (!ids.length) return [];
+    if (!ids.length) return empty;
 
     const apiUrl =
       `https://www.googleapis.com/youtube/v3/videos?part=${PARTS}` +
@@ -50,19 +52,29 @@ export async function checkYouTubeLiveRSS(channelId, apiKey) {
 
     if (!apiRes.ok) {
       console.error('YouTube API error:', JSON.stringify(data.error || data));
-      return [];
+      return empty;
     }
 
-    return (data.items || [])
-      .filter((it) => {
-        const d = it.liveStreamingDetails;
-        return d && d.actualStartTime && !d.actualEndTime;
-      })
-      .map(mapItem);
+    const live = [];
+    const upcoming = [];
+    for (const it of data.items || []) {
+      const d = it.liveStreamingDetails;
+      if (!d) continue;
+      if (d.actualStartTime && !d.actualEndTime) live.push(mapItem(it));
+      else if (!d.actualStartTime && d.scheduledStartTime && it.snippet?.liveBroadcastContent === 'upcoming') {
+        upcoming.push(mapItem(it));
+      }
+    }
+    return { live, upcoming };
   } catch (error) {
     console.error(`YouTube Error [${channelId}]:`, error);
-    return [];
+    return empty;
   }
+}
+
+// سازگاری با نسخه قبل: فقط لایوهای در حال پخش
+export async function checkYouTubeLiveRSS(channelId, apiKey) {
+  return (await checkChannelStreams(channelId, apiKey)).live;
 }
 
 export async function getSingleVideoInfo(videoId, apiKey) {
@@ -113,6 +125,33 @@ export async function resolveChannel(input, apiKey) {
     return { id: item.id, title: item.snippet?.title || '' };
   } catch (e) {
     console.error('resolveChannel error:', e);
+    return null;
+  }
+}
+
+// وضعیت پایان چند ویدیو با یک درخواست (۱ واحد سهمیه). خروجی: Map(id -> {found, endTime}) یا null در خطا
+export async function getVideosEndInfo(ids, apiKey) {
+  const map = new Map();
+  try {
+    for (let i = 0; i < ids.length; i += 50) {
+      const chunk = ids.slice(i, i + 50);
+      const res = await fetch(
+        `https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails,status&id=${chunk.join(',')}&key=${apiKey}`,
+        { signal: AbortSignal.timeout(8000) }
+      );
+      const data = await res.json();
+      if (!res.ok) {
+        console.error('getVideosEndInfo error:', JSON.stringify(data.error || data));
+        return null;
+      }
+      for (const it of data.items || []) {
+        const d = it.liveStreamingDetails || {};
+        map.set(it.id, { found: true, endTime: d.actualEndTime ? Date.parse(d.actualEndTime) : 0 });
+      }
+    }
+    return map;
+  } catch (e) {
+    console.error('getVideosEndInfo exception:', e);
     return null;
   }
 }
