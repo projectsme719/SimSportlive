@@ -1,6 +1,8 @@
 import { CONFIG, SPORTS, WOMEN_TAG } from '../config.js';
 import { tgApi } from './telegram.js';
 import { getVideosEndInfo } from './youtube.js';
+import { classifyLiveFrame } from './gemini.js';
+import { getSettings } from './settings.js';
 
 const esc = (s) =>
   String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -49,6 +51,34 @@ export async function finalizePost(env, id, rec) {
   return res.ok === true || /not modified/i.test(res.description || '');
 }
 
+// پخش ادامه‌دار است ولی مسابقه ما تمام شده؟ {over, changed}
+async function checkMatchOver(env, id, rec, settings) {
+  const L = CONFIG.MATCH_LIMITS[rec.sport] || CONFIG.MATCH_LIMITS.other;
+  const elapsed = (Date.now() - (rec.postedAt || Date.now())) / 60000;
+
+  // سقف زمانی هر ورزش
+  if (elapsed >= L.maxMin) return { over: true, changed: false };
+
+  if (!settings.endDetect || !CONFIG.END_DETECT.ENABLED || !rec.target || elapsed < L.minCheckMin) {
+    return { over: false, changed: false };
+  }
+
+  const state = await classifyLiveFrame({ id, title: rec.title, channelTitle: rec.channelTitle }, env, rec.target);
+  let changed = false;
+  if (state === 'target') {
+    rec.sawTarget = true;
+    rec.otherScore = 0;
+    changed = true;
+  } else if (rec.sawTarget && state === 'other') {
+    rec.otherScore = (rec.otherScore || 0) + 1;
+    changed = true;
+  } else if (rec.sawTarget && state === 'waiting') {
+    rec.otherScore = (rec.otherScore || 0) + 0.34; // استراحت بین دو نیمه نباید پست را ببندد
+    changed = true;
+  }
+  return { over: !!rec.sawTarget && (rec.otherScore || 0) >= CONFIG.END_DETECT.CONSECUTIVE, changed };
+}
+
 // هر بار Cron اجرا شود: پست‌های فعال را بررسی می‌کند
 export async function processActivePosts(env) {
   const kv = env.POSTED_LIVES;
@@ -58,6 +88,7 @@ export async function processActivePosts(env) {
   const ids = list.keys.map((k) => k.name.slice('active:'.length));
   const infos = await getVideosEndInfo(ids, env.YOUTUBE_API_KEY);
   if (!infos) return; // خطای API؛ دور بعد
+  const settings = await getSettings(env);
 
   for (const id of ids) {
     try {
@@ -70,6 +101,14 @@ export async function processActivePosts(env) {
       if (info && info.found && !info.endTime) {
         if (rec.endedAt) {
           delete rec.endedAt; // پخش دوباره ادامه پیدا کرده
+          await kv.put('active:' + id, JSON.stringify(rec), { expirationTtl: 259200 });
+        }
+
+        // پخش ادامه دارد؛ ولی آیا مسابقه افغان تمام شده؟
+        const res = await checkMatchOver(env, id, rec, settings);
+        if (res.over) {
+          await finalizePost(env, id, rec);
+        } else if (res.changed) {
           await kv.put('active:' + id, JSON.stringify(rec), { expirationTtl: 259200 });
         }
         continue;
