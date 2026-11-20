@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { checkChannelStreams } from './services/youtube.js';
+import { searchStreams } from './services/discover.js';
 import { analyzeMatchWithGemini } from './services/gemini.js';
 import { hasMatchStarted } from './services/matchstart.js';
 import { getSettings } from './services/settings.js';
@@ -221,6 +222,31 @@ async function runLiveCheckProcess(env, settings) {
     }
   }
 
+  // جستجوی عمومی یوتیوب: لایو/مسابقه افغانستان در کانال‌هایی که در فهرست ما نیستند
+  if (settings.globalSearch) {
+    try {
+      const found = await searchStreams(env);
+      for (const video of found.live) {
+        if (seenNow.has(video.id)) continue;
+        seenNow.add(video.id);
+        video.trusted = false;
+        try {
+          await processLiveVideo(video, whitelist, settings, env);
+        } catch (e) {
+          console.error(`Error processing ${video.id}:`, e);
+        }
+      }
+      const upIds = new Set(upcomingAll.map((u) => u.id));
+      for (const u of found.upcoming) {
+        if (upIds.has(u.id)) continue;
+        u.trusted = false;
+        upcomingAll.push(u);
+      }
+    } catch (e) {
+      console.error('searchStreams error:', e);
+    }
+  }
+
   // لایوهای زمان‌بندی‌شده → تقویم (خودکار)
   if (settings.autoCalendar && hasCalendar(env) && upcomingAll.length) {
     try {
@@ -228,6 +254,95 @@ async function runLiveCheckProcess(env, settings) {
     } catch (e) {
       console.error('discoverUpcoming error:', e);
     }
+  }
+}
+
+async function processLiveVideo(video, whitelist, settings, env) {
+  const kv = env.POSTED_LIVES;
+  const id = video.id;
+
+  if (await kv.get('posted:' + id)) return;
+  if (await kv.get('pending:' + id)) return;
+  if (await kv.get('seen:' + id)) return;
+
+  // مسابقه ثبت‌شده در تقویم برای این لایو
+  let entry = null;
+  if (hasCalendar(env)) {
+    try {
+      entry = await getEntryByVideo(env, id);
+    } catch {}
+  }
+
+  // ۱) تحلیل متنی (برای لایوهای در انتظار کش می‌شود تا Gemini تکراری صدا نشود)
+  let ai = null;
+  const cached = await kv.get('wait:' + id);
+  if (cached) {
+    try {
+      ai = JSON.parse(cached).ai;
+    } catch {}
+  }
+  if (!ai) {
+    let candidates = [];
+    if (hasCalendar(env) && !entry) {
+      try {
+        candidates = await findCandidates(env);
+      } catch {}
+    }
+    ai = await analyzeMatchWithGemini(video, whitelist, env, candidates);
+    if (!ai.ok) return; // دور بعد دوباره تلاش می‌شود
+
+    // Gemini تشخیص داد این لایو همان مسابقه تقویم است
+    if (!entry && ai.calendarId) {
+      entry = await getEntry(env, ai.calendarId);
+      if (entry) await linkVideo(env, entry, id);
+    }
+  }
+  if (entry) ai = applyEntry(ai, entry);
+
+  // ۲) مرتبط بودن (مسابقه ثبت‌شده در تقویم همیشه مرتبط است)
+  const relevant =
+    !!entry ||
+    (ai.isSports &&
+      ai.isAfghan &&
+      settings.sports.includes(ai.sport) &&
+      ai.confidence >= CONFIG.REVIEW_CONFIDENCE);
+  if (!relevant) {
+    await kv.delete('wait:' + id);
+    await kv.put('seen:' + id, '1', { expirationTtl: 10800 });
+    return;
+  }
+
+  // ۳) فقط لایوهایی که داخل تلگرام قابل پخش‌اند
+  if (settings.requireEmbeddable && video.embeddable === false) {
+    await kv.delete('wait:' + id);
+    await kv.put('seen:' + id, '1', { expirationTtl: 43200 });
+    if (CONFIG.NOTIFY_ADMIN_NOT_EMBEDDABLE) {
+      await sendText(
+        env,
+        CONFIG.ADMIN_ID,
+        `🚫 لایو افغانی پیدا شد ولی پخش داخل تلگرام برایش ممکن نیست (امبد ممنوع یا محدود)، پس منتشر نشد:\n\n${video.title}\n${video.channelTitle}\n${video.link}`
+      );
+    }
+    return;
+  }
+
+  // ۴) صبر تا شروع واقعی «مسابقه افغان» (در پخش چندمسابقه‌ای)
+  const start = await hasMatchStarted(video, env, settings, ai.matchTitle || ai.fighterName || '');
+  if (!start.started) {
+    const slim = { ...video, description: String(video.description || '').slice(0, 300) };
+    await kv.put('wait:' + id, JSON.stringify({ ai, video: slim, savedAt: Date.now() }), {
+      expirationTtl: 43200,
+    });
+    return;
+  }
+
+  // ۵) انتشار (یا ارسال برای تأیید ادمین)
+  await kv.delete('wait:' + id);
+  if (settings.autoPublish && ai.confidence >= CONFIG.AUTO_PUBLISH_CONFIDENCE) {
+    const ok = await publishToChannel(video, ai, env);
+    if (ok) await kv.put('posted:' + id, '1', { expirationTtl: 604800 });
+  } else {
+    await sendAdminReview(video, ai, env);
   }
 }
 
