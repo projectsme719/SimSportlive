@@ -164,25 +164,35 @@ async function fetchLiveFrame(videoId) {
   return null;
 }
 
-// خروجی: 'match' | 'waiting' | 'unknown'
-export async function classifyLiveFrame(video, env) {
+// خروجی بدون target: 'match' | 'waiting' | 'unknown'
+// خروجی با target: 'target' | 'other' | 'match' | 'waiting' | 'unknown'
+export async function classifyLiveFrame(video, env, target = '') {
   const img = await fetchLiveFrame(video.id);
   if (!img) return 'unknown';
+
+  const targetBlock = target
+    ? `
+مسابقه مورد نظر ما: ${String(target).slice(0, 150)}
+- target: مسابقه مورد نظر ما (همین تیم یا ورزشکار) در جریان است و نام یا پرچم آن‌ها در تصویر یا نتیجه‌نما دیده می‌شود.
+- other: مسابقه دیگری با تیم‌ها یا ورزشکاران متفاوت در جریان است (نام‌ها خوانا و متفاوت‌اند).
+- match: مسابقه‌ای در جریان است ولی نمی‌توانید تشخیص دهید کدام تیم‌ها هستند.`
+    : `
+- match: تصویر دوربین از خود مسابقه در جریان است (بازیکنان در زمین، مبارزان در رینگ، نمای مسابقه همراه با نتیجه یا ساعت بازی).`;
 
   const prompt = `
 این تصویر، فریم/تامبنیل یک پخش زنده یوتیوب است.
 عنوان: ${String(video.title).slice(0, 200)}
 کانال: ${video.channelTitle}
 
-وضعیت پخش را تعیین کنید:
-- match: تصویر دوربین از خود مسابقه در جریان است (بازیکنان در زمین، مبارزان در رینگ، نمای مسابقه همراه با نتیجه یا ساعت بازی).
-- waiting: صفحه انتظار یا شمارش معکوس، عبارت‌هایی مثل «به زودی» یا Starting soon، لوگو یا انیمیشن شروع، استودیوی قبل از بازی، ورزشگاه خالی بدون بازی، یا تبلیغات.
+وضعیت پخش را تعیین کنید:${targetBlock}
+- waiting: صفحه انتظار یا شمارش معکوس، عبارت‌هایی مثل «به زودی» یا Starting soon، لوگو یا انیمیشن شروع، استودیوی قبل یا بین بازی‌ها، ورزشگاه خالی بدون بازی، یا تبلیغات.
 - unknown: اگر نمی‌توانید مطمئن شوید، یا تصویر یک پوستر/گرافیک طراحی‌شده است نه فریم دوربین.
 
-فقط JSON برگردانید: {"state": "match"}
+فقط JSON برگردانید: {"state": "${target ? 'target' : 'match'}"}
 `;
 
   const r = await runGemini([{ inlineData: { mimeType: 'image/jpeg', data: img } }, { text: prompt }], env);
   if (!r.ok) return 'unknown';
-  return r.data.state === 'match' || r.data.state === 'waiting' ? r.data.state : 'unknown';
+  const allowed = target ? ['target', 'other', 'match', 'waiting'] : ['match', 'waiting'];
+  return allowed.includes(r.data.state) ? r.data.state : 'unknown';
 }
