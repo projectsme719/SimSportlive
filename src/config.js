@@ -53,6 +53,32 @@ export const CONFIG = {
     MAX_AUTO_ANALYSES_PER_RUN: 4, // سقف تحلیل Gemini برای کشف خودکار در هر اجرا
   },
 
+  // حد زمانی هر مسابقه بعد از انتشار پست (دقیقه). وقتی پخش ادامه‌دار است و مسابقه افغان تمام شده،
+  // پست بعد از maxMin حتماً بسته می‌شود؛ از minCheckMin به بعد، تصویر زنده هم بررسی می‌شود
+  MATCH_LIMITS: {
+    football: { minCheckMin: 75, maxMin: 150 },
+    futsal: { minCheckMin: 40, maxMin: 100 },
+    cricket: { minCheckMin: 120, maxMin: 540 },
+    mma: { minCheckMin: 30, maxMin: 300 },
+    other: { minCheckMin: 45, maxMin: 180 },
+  },
+
+  // تشخیص پایان مسابقه از روی تصویر زنده (برای پخش‌های چندمسابقه‌ای)
+  END_DETECT: {
+    ENABLED: true,
+    CONSECUTIVE: 3, // چند بار پشت‌سرهم (هر ۵ دقیقه) مسابقه دیگری دیده شود تا پست بسته شود
+  },
+
+  // جستجوی عمومی یوتیوب برای لایوها و مسابقه‌های افغانستان در هر کانالی (هر جستجو ۱۰۰ واحد سهمیه!)
+  SEARCH: {
+    LIVE_QUERIES: ['Afghanistan vs'],
+    UPCOMING_QUERIES: ['Afghanistan vs'],
+    LIVE_INTERVAL_MIN: 30,
+    UPCOMING_INTERVAL_MIN: 180,
+    MAX_RESULTS: 10,
+    MAX_NEW_PER_RUN: 8, // سقف لایوهای تازه‌ای که در هر اجرا تحلیل می‌شوند
+  },
+
   // بعد از پایان لایو، چند دقیقه صبر شود و بعد پست کانال ویرایش و لینک منقضی شود
   END_GRACE_MIN: 5,
 
