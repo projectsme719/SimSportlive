@@ -67,7 +67,7 @@ async function adminPreviewButton(video, env) {
   return { text: '👁 پیش‌نمایش پخش', url: video.embeddable === false ? video.link : miniAppUrl(video.id) };
 }
 
-// ساخت کپشن نهایی کانال: عنوان ورزش + زبان پخش + متن دری + هشتگ‌ها
+// ساخت کپشن نهایی کانال: عنوان ورزش + متن دری + هشتگ‌ها
 export function buildCaption(ai) {
   const sport = SPORTS[ai.sport] || SPORTS.other;
   const head = `${sport.emoji} <b>پخش زنده ${esc(sport.label)}${ai.isWomen ? ' بانوان' : ''}</b>`;
@@ -120,7 +120,6 @@ export async function publishToChannel(video, ai, env) {
 
   const messageId = res.result?.message_id;
   if (res.ok && messageId) {
-        await afterPublish(env, video.id);
     // ثبت پست فعال تا بعد از پایان مسابقه ویرایش شود
     try {
       await env.POSTED_LIVES.put(
@@ -139,6 +138,7 @@ export async function publishToChannel(video, ai, env) {
     } catch (e) {
       console.error('active put error:', e);
     }
+    await afterPublish(env, video.id);
   }
   return res.ok === true;
 }
