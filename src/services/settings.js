@@ -17,6 +17,8 @@ export async function getSettings(env) {
     autoPublish: typeof s.autoPublish === 'boolean' ? s.autoPublish : true,
     autoCalendar: typeof s.autoCalendar === 'boolean' ? s.autoCalendar : true,
     announce: typeof s.announce === 'boolean' ? s.announce : true,
+    endDetect: typeof s.endDetect === 'boolean' ? s.endDetect : CONFIG.END_DETECT.ENABLED,
+    globalSearch: typeof s.globalSearch === 'boolean' ? s.globalSearch : true,
   };
 }
 
