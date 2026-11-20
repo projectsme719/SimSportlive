@@ -26,55 +26,105 @@ function mapItem(item) {
 
 const PARTS = 'snippet,liveStreamingDetails,status,contentDetails';
 
-// لایوهای در حال پخش + لایوهای زمان‌بندی‌شده یک کانال: {live, upcoming}
-export async function checkChannelStreams(channelId, apiKey) {
-  const empty = { live: [], upcoming: [] };
+// جدا کردن لایوهای در حال پخش و زمان‌بندی‌شده از نتیجه videos.list
+function splitStreams(items) {
+  const live = [];
+  const upcoming = [];
+  for (const it of items || []) {
+    const d = it.liveStreamingDetails;
+    if (!d) continue;
+    if (d.actualStartTime && !d.actualEndTime) live.push(mapItem(it));
+    else if (!d.actualStartTime && d.scheduledStartTime && it.snippet?.liveBroadcastContent === 'upcoming') {
+      upcoming.push(mapItem(it));
+    }
+  }
+  return { live, upcoming };
+}
+
+// آیدی ویدیوهای اخیر کانال: اول RSS (رایگان)، اگر خطا داد پلی‌لیست آپلودها (۱ واحد سهمیه)
+async function recentVideoIds(channelId, apiKey) {
   try {
     const rssRes = await fetch(`https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`, {
       signal: AbortSignal.timeout(8000),
     });
-    if (!rssRes.ok) {
-      console.error(`RSS ${channelId} status ${rssRes.status}`);
-      return empty;
+    if (rssRes.ok) {
+      const xml = await rssRes.text();
+      const ids = [...xml.matchAll(/<yt:videoId>([^<]+)<\/yt:videoId>/g)].slice(0, 15).map((m) => m[1]);
+      if (ids.length) return ids;
+    } else {
+      console.error(`RSS ${channelId} status ${rssRes.status} → fallback playlist`);
     }
+  } catch (e) {
+    console.error(`RSS ${channelId} error:`, e?.message || e);
+  }
 
-    const xml = await rssRes.text();
-    const ids = [...xml.matchAll(/<yt:videoId>([^<]+)<\/yt:videoId>/g)]
-      .slice(0, 15)
-      .map((m) => m[1]);
-    if (!ids.length) return empty;
+  try {
+    const res = await fetch(
+      `https://www.googleapis.com/youtube/v3/playlistItems?part=contentDetails&playlistId=UU${channelId.slice(2)}&maxResults=15&key=${apiKey}`,
+      { signal: AbortSignal.timeout(8000) }
+    );
+    const data = await res.json();
+    if (res.ok) return (data.items || []).map((i) => i.contentDetails?.videoId).filter(Boolean);
+    console.error('playlistItems error:', JSON.stringify(data.error || data));
+  } catch (e) {
+    console.error('playlistItems exception:', e?.message || e);
+  }
+  return [];
+}
 
-    const apiUrl =
-      `https://www.googleapis.com/youtube/v3/videos?part=${PARTS}` +
-      `&id=${ids.join(',')}&key=${apiKey}`;
-    const apiRes = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
-    const data = await apiRes.json();
-
-    if (!apiRes.ok) {
-      console.error('YouTube API error:', JSON.stringify(data.error || data));
-      return empty;
-    }
-
-    const live = [];
-    const upcoming = [];
-    for (const it of data.items || []) {
-      const d = it.liveStreamingDetails;
-      if (!d) continue;
-      if (d.actualStartTime && !d.actualEndTime) live.push(mapItem(it));
-      else if (!d.actualStartTime && d.scheduledStartTime && it.snippet?.liveBroadcastContent === 'upcoming') {
-        upcoming.push(mapItem(it));
+// جزئیات چند ویدیو → {live, upcoming}
+export async function getVideosDetails(ids, apiKey) {
+  const empty = { live: [], upcoming: [] };
+  if (!ids.length) return empty;
+  try {
+    const items = [];
+    for (let i = 0; i < ids.length; i += 50) {
+      const apiUrl =
+        `https://www.googleapis.com/youtube/v3/videos?part=${PARTS}` +
+        `&id=${ids.slice(i, i + 50).join(',')}&key=${apiKey}`;
+      const apiRes = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
+      const data = await apiRes.json();
+      if (!apiRes.ok) {
+        console.error('YouTube API error:', JSON.stringify(data.error || data));
+        return empty;
       }
+      items.push(...(data.items || []));
     }
-    return { live, upcoming };
+    return splitStreams(items);
   } catch (error) {
-    console.error(`YouTube Error [${channelId}]:`, error);
+    console.error('getVideosDetails error:', error);
     return empty;
   }
+}
+
+// لایوهای در حال پخش + لایوهای زمان‌بندی‌شده یک کانال: {live, upcoming}
+export async function checkChannelStreams(channelId, apiKey) {
+  const ids = await recentVideoIds(channelId, apiKey);
+  return getVideosDetails(ids, apiKey);
 }
 
 // سازگاری با نسخه قبل: فقط لایوهای در حال پخش
 export async function checkYouTubeLiveRSS(channelId, apiKey) {
   return (await checkChannelStreams(channelId, apiKey)).live;
+}
+
+// جستجوی عمومی یوتیوب (۱۰۰ واحد سهمیه). eventType: live | upcoming
+export async function searchVideoIds(apiKey, { eventType, q, maxResults = 10 }) {
+  try {
+    const url =
+      `https://www.googleapis.com/youtube/v3/search?part=id&type=video&eventType=${eventType}` +
+      `&q=${encodeURIComponent(q)}&maxResults=${maxResults}&key=${apiKey}`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('search error:', JSON.stringify(data.error || data));
+      return [];
+    }
+    return (data.items || []).map((i) => i.id?.videoId).filter(Boolean);
+  } catch (e) {
+    console.error('search exception:', e?.message || e);
+    return [];
+  }
 }
 
 export async function getSingleVideoInfo(videoId, apiKey) {
