@@ -13,3 +13,18 @@ export function h(tag, props = {}, ...kids) {
   }
   return el;
 }
+
+// پیام کوتاه پایین صفحه
+let toastTimer;
+export function toast(text, ms = 4500) {
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = text;
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), ms);
+}
+
+export function copyText(text) {
+  try { return navigator.clipboard.writeText(text).then(() => true, () => false); } catch { return Promise.resolve(false); }
+}

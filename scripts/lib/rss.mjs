@@ -11,18 +11,15 @@ export function parseRss(xml, league, limit = 4) {
   })).filter((x) => x.title && x.link);
 }
 
-async function get(q, locale) {
-  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&${locale}`;
+async function get(q) {
+  const url = `https://news.google.com/rss/search?q=${encodeURIComponent(q)}&hl=en-US&gl=US&ceid=US:en`;
   const r = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
   if (!r.ok) throw new Error(`RSS HTTP ${r.status}`);
   return r.text();
 }
 
-// اول فارسی، اگر چیزی نبود انگلیسی
-export async function leagueNews(league, query, fa) {
-  try {
-    const items = parseRss(await get(`${fa} when:2d`, 'hl=fa&gl=IR&ceid=IR:fa'), league);
-    if (items.length) return items;
-  } catch {}
-  try { return parseRss(await get(`${query} football when:2d`, 'hl=en-US&gl=US&ceid=US:en'), league); } catch { return []; }
+// عنوان خبرهای انگلیسی یک لیگ (پسوند « - نام سایت» از عنوان حذف می‌شود)
+export async function englishNews(league, query, limit = 4) {
+  const items = parseRss(await get(`${query} football when:1d`), league, limit);
+  return items.map((i) => ({ ...i, title: i.source && i.title.endsWith(` - ${i.source}`) ? i.title.slice(0, -(i.source.length + 3)) : i.title }));
 }

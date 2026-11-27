@@ -4,14 +4,14 @@ import { agoLabel } from '../shared/time.js';
 import { getState, startAutoRefresh, subscribe } from './data.js';
 import { initTelegram, startParam, tap } from './lib/tg.js';
 import { HomePage } from './pages/home.js';
-import { TodayPage } from './pages/today.js';
+import { NewsPage } from './pages/news.js';
 import { WeekPage } from './pages/week.js';
 
 initTelegram();
 document.title = SETTINGS.appName;
 document.getElementById('brand-name').textContent = SETTINGS.appName;
 
-const pages = { home: HomePage(), today: TodayPage(), week: WeekPage() };
+const pages = { home: HomePage(), news: NewsPage(), week: WeekPage() };
 const view = document.getElementById('view');
 const wrappers = {};
 for (const [name, p] of Object.entries(pages)) {
@@ -35,11 +35,12 @@ function route() {
 document.querySelector('.tabs').addEventListener('click', tap);
 window.addEventListener('hashchange', route);
 
-// لینک‌های عمیق از کانال: ?startapp=live | today | week
+// لینک‌های عمیق از کانال (?startapp=...):  home | news | week | live | w_<id شبکه>  (مثلاً w_varzesh)
 const sp = startParam();
-if (sp === 'today' || sp === 'week') location.hash = `#/${sp}`;
+if (sp === 'news' || sp === 'week') location.hash = `#/${sp}`;
 route();
 if (sp === 'live') setTimeout(() => pages.home.open(), 300);
+if (sp.startsWith('w_')) setTimeout(() => pages.home.watch(sp.slice(2)), 400);
 
 const updated = document.getElementById('updated');
 subscribe((s) => {

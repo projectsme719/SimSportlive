@@ -17,6 +17,14 @@ export function statusText(m) {
   return '';
 }
 
+// آیا الان باید دکمه‌های پخش زنده فعال باشد؟  (از لحظهٔ شروع تا پایان بازی؛ با ساعت خود گوشی، حتی اگر داده کمی قدیمی باشد)
+export function isOnAir(m, now = Date.now()) {
+  if (m.phase === 'live') return true;
+  if (m.phase !== 'upcoming') return false;
+  const k = Date.parse(m.kickoff);
+  return now >= k - SETTINGS.live.leadMinutes * 60000 && now < k + SETTINGS.live.windowHours * 3600000;
+}
+
 export const hasScore = (m) => m.phase === 'live' || m.phase === 'finished';
 export const scoreText = (m) => `${m.home.score ?? 0} - ${m.away.score ?? 0}`;
 export const kickoffMs = (m) => Date.parse(m.kickoff);

@@ -24,9 +24,11 @@ export function chunk(text, max = 3800) {
   return out;
 }
 
+// buttons: آرایه‌ای از دکمه‌ها (یک ردیف) یا آرایه‌ای از ردیف‌ها [[...],[...]]
 export async function send(token, chatId, text, buttons = []) {
   const body = { chat_id: chatId, text, parse_mode: 'HTML', disable_web_page_preview: true };
-  if (buttons.length) body.reply_markup = { inline_keyboard: [buttons.map((b) => ({ text: b.text, url: b.url }))] };
+  const rows = buttons.length && !Array.isArray(buttons[0]) ? [buttons] : buttons;
+  if (rows.length) body.reply_markup = { inline_keyboard: rows.map((r) => r.map((b) => ({ text: b.text, url: b.url }))) };
   for (let i = 0; i < 3; i++) {
     const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),

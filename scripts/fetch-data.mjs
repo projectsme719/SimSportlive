@@ -4,7 +4,6 @@ import { LEAGUES } from '../config/leagues.js';
 import { SETTINGS } from '../config/settings.js';
 import { addDays, ymd } from '../shared/time.js';
 import { fetchLeague } from './lib/espn.mjs';
-import { leagueNews } from './lib/rss.mjs';
 
 const today = ymd(Date.now());
 const from = addDays(today, -8);   // برای نمایش نتایج هفتهٔ قبل
@@ -38,11 +37,7 @@ results.forEach((r, i) => {
 });
 matches.sort((a, b) => Date.parse(a.kickoff) - Date.parse(b.kickoff));
 
-const news = (await Promise.all(LEAGUES.map((l) => leagueNews(l.slug, l.news, l.fa)))).flat()
-  .sort((a, b) => Date.parse(b.date) - Date.parse(a.date));
-
 mkdirSync('data', { recursive: true });
 const updatedAt = new Date().toISOString();
 writeFileSync('data/matches.json', JSON.stringify({ updatedAt, timeZone: SETTINGS.timeZone, errors, matches }));
-writeFileSync('data/news.json', JSON.stringify({ updatedAt, items: news.slice(0, 30) }));
-console.log(`matches: ${matches.length} | news: ${news.length} | errors: ${errors.join(',') || '-'}`);
+console.log(`matches: ${matches.length} | errors: ${errors.join(',') || '-'}`);

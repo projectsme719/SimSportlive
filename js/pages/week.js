@@ -39,7 +39,7 @@ export function WeekPage() {
       const d = addDays(start, i);
       const ms = st.matches.filter((m) => ymd(kickoffMs(m)) === d && (filter.value === 'all' || m.league === filter.value)).sort(byTime);
       days.append(h('div', { class: 'day-head' + (d === today ? ' today' : '') }, dayLabel(d), h('small', {}, dayGreg(d))));
-      days.append(...(ms.length ? ms.map((m) => matchCard(m, { showLeague: true })) : [h('div', { class: 'day-none' }, 'بازی‌ای نیست')]));
+      days.append(...(ms.length ? ms.map((m) => matchCard(m, { showLeague: true, mode: 'week' })) : [h('div', { class: 'day-none' }, 'بازی‌ای نیست')]));
     }
   }
   return { el, onData(s) { st = s; render(); }, onShow() {}, onHide() {} };

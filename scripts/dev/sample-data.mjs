@@ -13,12 +13,12 @@ const now = Date.now();
 const matches = [];
 let id = 1;
 // ساعت شروع نسبت به «حالا» (ساعت): منفی = گذشته
-const offsets = [-170, -140, -3, -1.2, -0.3, 0.05, 0.4, 1.5, 3, 5, 9, 26, 30, 50, 75, 100, 130, 170, 200];
+const offsets = [-170, -140, -3, -1.2, -0.3, -0.1, 0.05, 0.4, 1.5, 3, 5, 9, 26, 30, 50, 75, 100, 130, 170, 200];
 offsets.forEach((o, i) => {
   const [h, a] = teams[i % teams.length];
   const lg = LEAGUES[i % LEAGUES.length].slug;
   const start = now + o * H;
-  const phase = o < -2 ? 'finished' : o < 0 ? (o > -1.8 && o < -0.2 ? 'live' : 'finished') : 'upcoming';
+  const phase = o < -2 ? 'finished' : o === -0.1 ? 'upcoming' : o < 0 ? (o > -1.8 && o < -0.2 ? 'live' : 'finished') : 'upcoming';
   const live = phase === 'live';
   matches.push({
     id: String(id++), league: lg, kickoff: new Date(start).toISOString(), phase,
@@ -32,7 +32,8 @@ matches.sort((x, y) => Date.parse(x.kickoff) - Date.parse(y.kickoff));
 mkdirSync('data', { recursive: true });
 writeFileSync('data/matches.json', JSON.stringify({ updatedAt: new Date().toISOString(), errors: [], matches }));
 writeFileSync('data/news.json', JSON.stringify({ updatedAt: new Date().toISOString(), items: [
-  { league: 'eng.1', title: 'خلاصه بازی آرسنال و چلسی در لیگ برتر', link: 'https://example.com/1', source: 'ورزش۳', date: new Date(now - 2 * H).toISOString() },
-  { league: 'esp.1', title: 'ال‌کلاسیکو؛ ترکیب احتمالی بارسلونا و رئال‌مادرید', link: 'https://example.com/2', source: 'ورزش۳', date: new Date(now - 5 * H).toISOString() },
+  { id: 'a', league: 'eng.1', fa: 'آرسنال با پیروزی در شهرآورد لندن صدرنشینی خود را تثبیت کرد', date: new Date(now - 2 * H).toISOString(), source: 'BBC Sport' },
+  { id: 'b', league: 'esp.1', fa: 'ال‌کلاسیکو؛ ترکیب احتمالی بارسلونا و رئال‌مادرید مشخص شد', date: new Date(now - 5 * H).toISOString(), source: 'AS' },
+  { id: 'c', league: 'uefa.champions', fa: 'قرعه‌کشی مرحلهٔ حذفی لیگ قهرمانان اروپا؛ چه تیم‌هایی به هم می‌رسند؟', date: new Date(now - 9 * H).toISOString(), source: 'UEFA' },
 ] }));
 console.log('sample data written:', matches.length);

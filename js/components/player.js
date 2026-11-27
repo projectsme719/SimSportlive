@@ -1,7 +1,8 @@
-// پلیر زندهٔ HLS. برای مرورگرهایی که HLS ندارند از hls.js استفاده می‌کند.
+// پلیر زندهٔ HLS با تعویض خودکار منبع: اگر لینک اول کار نکرد، لینک بعدی را امتحان می‌کند.
 import { SETTINGS } from '../../config/settings.js';
-import { streamUrl } from '../../shared/stream.js';
-import { h } from '../lib/dom.js';
+import { vlcSource, webSources } from '../../shared/stream.js';
+import { copyText, h, toast } from '../lib/dom.js';
+import { openInVlc, openStore } from '../lib/vlc.js';
 
 const HLS_JS = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.17/dist/hls.min.js';
 let hlsLoad = null;
@@ -13,48 +14,78 @@ const loadHls = () => (hlsLoad ||= new Promise((ok) => {
   document.head.append(s);
 }));
 
+const START_TIMEOUT = 15000; // اگر ۱۵ ثانیه تصویر نیامد → منبع بعدی
+
 export function createPlayer() {
   const video = h('video', { controls: true, playsinline: true, autoplay: true });
   const title = h('span', {});
-  const bar = h('div', { class: 'player-bar' }, h('span', {}, h('span', { class: 'live-dot' }, '●'), title),
-    h('button', { class: 'btn-ghost', onclick: () => (video.requestFullscreen ? video.requestFullscreen() : video.webkitEnterFullscreen && video.webkitEnterFullscreen()) }, 'تمام‌صفحه'));
+  const src = h('small', { class: 'src-lbl' });
+  const bar = h('div', { class: 'player-bar' },
+    h('span', {}, h('span', { class: 'live-dot' }, '●'), title, src),
+    h('span', { class: 'bar-btns' },
+      h('button', { class: 'btn-ghost', onclick: () => current && openInVlc(current) }, 'VLC'),
+      h('button', { class: 'btn-ghost', onclick: () => (video.requestFullscreen ? video.requestFullscreen() : video.webkitEnterFullscreen && video.webkitEnterFullscreen()) }, 'تمام‌صفحه')));
   const msg = h('div', { class: 'player-msg hidden' });
-  const el = h('div', { class: 'player hidden' }, video, bar, msg);
-  let hls = null, current = null;
+  const note = h('div', { class: 'player-note' }, 'اگر پخش در مرورگر کار نکرد، دکمهٔ VLC را بزنید (برنامهٔ VLC باید روی گوشی نصب باشد).');
+  const el = h('div', { class: 'player hidden' }, video, bar, msg, note);
 
-  function fail(text) {
-    const url = streamUrl(current, SETTINGS.proxy.base);
+  let hls = null, current = null, list = [], idx = 0, timer = null;
+
+  const cleanup = () => { clearTimeout(timer); if (hls) { hls.destroy(); hls = null; } };
+  const ok = () => { clearTimeout(timer); msg.classList.add('hidden'); };
+  video.addEventListener('playing', ok);
+  video.addEventListener('canplay', ok);
+
+  function fail() {
+    cleanup();
     msg.replaceChildren(
-      h('div', {}, text),
+      h('div', {}, 'پخش در مرورگر شروع نشد. می‌توانید دوباره تلاش کنید یا با VLC ببینید.'),
       h('div', { class: 'row' },
         h('button', { class: 'btn-ghost', onclick: () => play(current) }, 'تلاش دوباره'),
-        h('button', { class: 'btn-ghost', onclick: () => navigator.clipboard && navigator.clipboard.writeText(url) }, 'کپی لینک پخش')));
+        h('button', { class: 'btn-ghost', onclick: () => openInVlc(current) }, '🟠 باز کردن در VLC'),
+        h('button', { class: 'btn-ghost', onclick: openStore }, 'دانلود VLC'),
+        h('button', { class: 'btn-ghost', onclick: async () => toast((await copyText(vlcSource(current, SETTINGS.proxy.base))) ? 'لینک کپی شد' : 'کپی نشد') }, 'کپی لینک')));
     msg.classList.remove('hidden');
   }
 
-  async function play(ch) {
-    current = ch;
-    el.classList.remove('hidden');
+  function next() {
+    cleanup();
+    idx += 1;
+    idx < list.length ? start() : fail();
+  }
+
+  async function start() {
+    src.textContent = list.length > 1 ? ` · منبع ${idx + 1} از ${list.length}` : '';
     msg.classList.add('hidden');
-    title.textContent = ch.name;
-    if (hls) { hls.destroy(); hls = null; }
-    const url = streamUrl(ch, SETTINGS.proxy.base);
+    const url = list[idx];
+    timer = setTimeout(next, START_TIMEOUT);
     const Hls = await loadHls();
+    if (url !== list[idx]) return; // در این فاصله منبع عوض شده
     if (Hls && Hls.isSupported()) {
-      hls = new Hls({ lowLatencyMode: true });
+      hls = new Hls({ lowLatencyMode: false });
+      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) next(); });
       hls.loadSource(url);
       hls.attachMedia(video);
-      hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) fail('پخش این شبکه شروع نشد. یک شبکهٔ دیگر را امتحان کنید یا دوباره تلاش کنید.'); });
     } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      video.onerror = next;
       video.src = url;
-      video.onerror = () => fail('پخش این شبکه شروع نشد. یک شبکهٔ دیگر را امتحان کنید یا دوباره تلاش کنید.');
     } else {
-      return fail('این دستگاه پخش زنده را پشتیبانی نمی‌کند. لینک را کپی و در VLC باز کنید.');
+      return next();
     }
     video.play().catch(() => {});
   }
 
-  function stop() { video.pause(); }
-  function close() { stop(); if (hls) { hls.destroy(); hls = null; } video.removeAttribute('src'); el.classList.add('hidden'); current = null; }
+  function play(ch) {
+    cleanup();
+    current = ch;
+    list = webSources(ch, SETTINGS.proxy.base);
+    idx = 0;
+    title.textContent = ch.name;
+    el.classList.remove('hidden');
+    list.length ? start() : fail();
+  }
+
+  const stop = () => video.pause();
+  function close() { cleanup(); video.pause(); video.removeAttribute('src'); el.classList.add('hidden'); current = null; }
   return { el, play, stop, close, get current() { return current; } };
 }

@@ -2,19 +2,22 @@
 import { SETTINGS } from '../config/settings.js';
 
 const pad = (n) => String(n).padStart(2, '0');
-const fmt = new Intl.DateTimeFormat('en-CA', {
-  timeZone: SETTINGS.timeZone, year: 'numeric', month: '2-digit', day: '2-digit',
+const cache = {};
+const fmtOf = (tz) => (cache[tz] ||= new Intl.DateTimeFormat('en-CA', {
+  timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
   hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-});
+}));
 
-export function parts(ms) {
+export function parts(ms, tz = SETTINGS.timeZone) {
   const o = {};
-  for (const p of fmt.formatToParts(new Date(ms))) o[p.type] = p.value;
+  for (const p of fmtOf(tz).formatToParts(new Date(ms))) o[p.type] = p.value;
   return { y: +o.year, m: +o.month, d: +o.day, h: +o.hour, min: +o.minute };
 }
 export const ymd = (ms) => { const p = parts(ms); return `${p.y}-${pad(p.m)}-${pad(p.d)}`; };
-export const hhmm = (ms) => { const p = parts(ms); return `${pad(p.h)}:${pad(p.min)}`; };
+export const hhmm = (ms, tz) => { const p = parts(ms, tz); return `${pad(p.h)}:${pad(p.min)}`; };
 export const minutesOfDay = (ms) => { const p = parts(ms); return p.h * 60 + p.min; };
+// ساعت یک لحظه در همهٔ منطقه‌های تنظیم‌شده: [{label:'افغانستان', time:'19:30'}, {label:'ایران', time:'19:00'}]
+export const timesFor = (ms) => SETTINGS.timeZones.map((z) => ({ label: z.label, tz: z.id, time: hhmm(ms, z.id) }));
 
 const utc = (s) => { const [y, m, d] = s.split('-').map(Number); return Date.UTC(y, m - 1, d, 12); };
 export const addDays = (s, n) => new Date(utc(s) + n * 86400000).toISOString().slice(0, 10);

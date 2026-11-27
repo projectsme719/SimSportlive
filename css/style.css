@@ -141,3 +141,41 @@ h2 { margin: 0; font-size: 18px; font-weight: 800; }
 .notice { padding: 12px; border-radius: var(--r-card); background: var(--white); border: 1px dashed var(--line); text-align: center; color: var(--muted); }
 
 @media (prefers-reduced-motion: reduce) { .slides, .badge.live { transition: none; animation: none; } }
+
+/* ── ساعت شروع (دو منطقه) ── */
+.match .mid.time { line-height: 1.25; }
+.match .mid.time .t1 { font-size: 17px; font-weight: 800; color: var(--navy); }
+.match .mid.time small { display: block; font-size: 11px; font-weight: 600; color: var(--muted); }
+.slide .small + .small { margin-top: 0; }
+.slide-live { color: #FF8795; font-weight: 800; }
+.match-foot { margin-top: 10px; padding: 7px; border-radius: 10px; background: var(--mist); text-align: center; font-weight: 800; font-size: 13px; color: var(--navy-2); }
+.today-list > h2 { margin-bottom: 8px; }
+
+/* ── دکمه‌های پخش کنار بازی ── */
+.live-actions { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.live-actions .row { display: flex; gap: 6px; flex-wrap: wrap; }
+.btn-ch { flex: 1 1 auto; padding: 9px 10px; border-radius: 10px; background: var(--red); color: var(--white); font-weight: 800; font-size: 13px; }
+.vlc-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.vlc-lbl { font-size: 12px; color: var(--muted); width: 100%; }
+.btn-vlc { padding: 5px 11px; border-radius: 99px; border: 1px solid #F59E0B; background: #FFF7E6; color: #9A5B00; font-weight: 600; font-size: 12px; }
+.vlc-note { margin-top: 6px; font-size: 11.5px; color: var(--muted); }
+
+/* ── پلیر: منبع و پیام ── */
+.src-lbl { color: #B8C4E3; font-weight: 400; margin-inline-start: 4px; }
+.bar-btns { display: flex; gap: 6px; }
+.player-note { padding: 8px 12px; background: var(--deep); color: #B8C4E3; font-size: 12px; }
+.player-msg .btn-ghost { font-size: 12.5px; }
+
+/* ── اخبار ── */
+.news-item { background: var(--white); border: 1px solid var(--line); border-radius: var(--r-card); padding: 12px; }
+.news-item + .news-item { margin-top: 8px; }
+.news-item p { margin: 4px 0 6px; font-weight: 600; font-size: 14.5px; line-height: 1.8; }
+.news-item small { color: var(--muted); font-size: 12px; }
+.tabs a span { font-size: 11.5px; }
+
+/* ── پیام کوتاه ── */
+.toast { position: fixed; inset-inline: 14px; bottom: calc(var(--tab-h) + env(safe-area-inset-bottom) + 14px); z-index: 50; padding: 11px 14px; border-radius: 12px; background: var(--navy); color: var(--white); font-size: 13px; line-height: 1.7; opacity: 0; transform: translateY(8px); pointer-events: none; transition: opacity .2s, transform .2s; }
+.toast.on { opacity: 1; transform: none; }
+
+/* دکمه‌های نوار پلیر (روی زمینهٔ تیره) */
+.player-bar .btn-ghost { background: transparent; border-color: #4A5F95; color: var(--white); padding: 5px 11px; font-size: 12.5px; }
