@@ -1,0 +1,11 @@
+{
+  "name": "live-hub",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "update": "node scripts/fetch-data.mjs && node scripts/notify.mjs",
+    "build": "node scripts/build.mjs",
+    "sample": "node scripts/dev/sample-data.mjs"
+  }
+}

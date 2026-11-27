@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0B1F4B">
+  <title>SimSport Live</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="brand-mark">●</span><span id="brand-name">SimSport Live</span></div>
+    <span class="updated" id="updated"></span>
+  </header>
+
+  <main id="view"></main>
+
+  <nav class="tabs" aria-label="صفحه‌ها">
+    <a href="#/home" data-tab="home">
+      <svg viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg><span>خانه</span>
+    </a>
+    <a href="#/today" data-tab="today">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m12 7 4 3-1.5 4.5h-5L8 10z"/></svg><span>امروز</span>
+    </a>
+    <a href="#/week" data-tab="week">
+      <svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg><span>هفته</span>
+    </a>
+  </nav>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
