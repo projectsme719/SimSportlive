@@ -21,6 +21,6 @@ export const CHANNELS = [
   { id: 'af-sports', name: 'ورزش افغانستان', group: 'افغانستان', icon: '⚽', url: 'https://stream1.liveland.af/hls/tv/af-sports/playlist.m3u8', proxy: true },
 
   // ── ایران (لینک عمومی؛ بدون پروکسی) ──
-  { id: 'varzesh', name: 'شبکه ورزش', group: 'ایران', icon: '⚽', url: 'https://ncdn.telewebion.ir/varzesh/live/playlist.m3u8', proxy: false },
+  { id: 'varzesh', name: 'شبکه ورزش', group: 'ایران', icon: '⚽', url: 'https://cp11.adabmedia.com/hls2/varzeshtest.m3u8', proxy: false },
   { id: 'tv3',     name: 'شبکه ۳',    group: 'ایران', icon: '📺', url: 'https://ncdn.telewebion.ir/tv3/live/playlist.m3u8',     proxy: false },
 ];
