@@ -1,0 +1,14 @@
+name: Test bot (manual)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Send test message to channel and admins
+        run: node scripts/notify.mjs --test
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
