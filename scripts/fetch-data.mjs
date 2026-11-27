@@ -20,7 +20,7 @@ async function previous() {
   } catch { return []; }
 }
 
-const results = await Promise.allSettled(LEAGUES.map((l) => fetchLeague(l.slug, from, to)));
+const results = await Promise.allSettled(LEAGUES.map((l) => fetchLeague(l.slug, from, to, today)));
 const ok = results.filter((r) => r.status === 'fulfilled').length;
 if (!ok) {
   console.error('هیچ لیگی دریافت نشد؛ داده‌ی قبلی دست‌نخورده می‌ماند.');
