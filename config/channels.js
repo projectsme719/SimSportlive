@@ -2,21 +2,21 @@
 //  همهٔ شبکه‌ها فقط در همین فایل‌اند: اضافه، حذف، تغییر نام و لینک.
 //
 //  هر شبکه:
-//    id       شناسهٔ یکتا (انگلیسی، بدون فاصله)
+//    id       شناسهٔ یکتا (فقط حرف انگلیسی، عدد، - و _ ؛ بدون فاصله)
 //    name     نامی که در مینی‌اپ دیده می‌شود
 //    group    دسته‌بندی در فهرست شبکه‌ها
 //    icon     ایموجی (اختیاری)
 //    sources  چند لینک .m3u8 به ترتیب اولویت. اگر اولی کار نکرد خودکار روی دومی می‌رود، و همین‌طور تا آخر.
 //    url      (به‌جای sources) فقط یک لینک
 //    vlc      لینکی که با دکمهٔ «باز کردن در VLC» باز می‌شود (اگر ننویسید، اولین منبع)
-//    proxy    true  → از پروکسی Cloudflare می‌گذرد (برای لینک‌هایی که Referer می‌خواهند، مثل liveland)
-//             false → مستقیم (سهمیهٔ Cloudflare مصرف نمی‌شود)
+//    proxy    true  → از پروکسی Cloudflare می‌گذرد (فقط برای لینک‌هایی که Referer می‌خواهند)
+//             false یا ننوشتن → مستقیم
 //    enabled  false → موقتاً مخفی (اختیاری)
 //
+//  قانون نوشتن: هر لینک داخل «دو علامت نقل‌قول» و بعدش «کاما».  'لینک',
 //  لینک‌های http:// داخل مرورگر (صفحهٔ https) پخش نمی‌شوند؛ آن‌ها فقط برای VLC به کار می‌روند.
 // ──────────────────────────────────────────────────────────────
 export const CHANNELS = [
-  // ── شبکه‌هایی که بازی‌ها را پخش می‌کنند ──
   {
     id: 'varzesh', name: 'شبکه ورزش', group: 'ورزشی', icon: '📡',
     sources: [
@@ -34,15 +34,12 @@ export const CHANNELS = [
     vlc: 'https://ncdn.telewebion.ir/tv3/live/playlist.m3u8',
   },
   {
-    id: 'beIN_Sprots_Xtra_Espanol', name: 'اسپانیا اسپورت', group: 'ورزشی', icon: '📡',
+    id: 'bein-es', name: 'اسپانیا اسپورت', group: 'ورزشی', icon: '📡',
     sources: [
-      'https://dc1644a9jazgj.cloudfront.net/beIN_Sports_Xtra_Espanol.m3u8',   // نسخهٔ https (حدس همان آدرس؛ اگر نشد، رد می‌شود)
-      'https://dc1644a9jazgj.cloudfront.net/beIN_Sports_Xtra_Espanol.m3u8,    // در مرورگر https کار نمی‌کند، برای VLC خوب است
+      'https://dc1644a9jazgj.cloudfront.net/beIN_Sports_Xtra_Espanol.m3u8',
     ],
-    vlc: 'https://dc1644a9jazgj.cloudfront.net/beIN_Sports_Xtra_Espanol.m3u8',
   },
-
-  
+];
 
 // شبکه‌هایی که کنار هر بازیِ «در حال پخش» دکمه می‌شوند (به ترتیب id)، و در پست‌های کانال هم می‌آیند.
-export const MATCH_CHANNELS = ['varzesh', 'tv3', 'beIN_Sprots_Xtra_Espanol'];
+export const MATCH_CHANNELS = ['varzesh', 'tv3', 'bein-es'];
