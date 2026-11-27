@@ -1,4 +1,5 @@
 // صفحهٔ ۳: هفته — برنامه و نتایج همهٔ بازی‌های شش لیگ (شنبه تا جمعه)
+import { SETTINGS } from '../../config/settings.js';
 import { byTime, kickoffMs } from '../../shared/format.js';
 import { addDays, dayGreg, dayLabel, dayShort, weekStart, ymd } from '../../shared/time.js';
 import { leagueFilter } from '../components/filters.js';
@@ -16,7 +17,10 @@ export function WeekPage() {
   const days = h('div', {});
   const el = h('div', { class: 'stack' }, h('h2', {}, 'برنامهٔ هفته'), nav, filter.el, days);
 
-  const thisWeek = () => weekStart(addDays(ymd(Date.now()), offset * 7));
+  const thisWeek = () => {
+    const d = addDays(ymd(Date.now()), offset * 7);
+    return SETTINGS.weekMode === 'calendar' ? weekStart(d) : d;   // rolling: از امروز
+  };
   function step(d) { tap(); offset += d; render(); }
 
   function render() {
@@ -27,7 +31,7 @@ export function WeekPage() {
     const ds = st.matches.map((m) => ymd(kickoffMs(m))).sort();
     prev.disabled = !ds.length || ds[0] >= start;
     next.disabled = !ds.length || ds[ds.length - 1] <= end;
-    title.replaceChildren(offset === 0 ? 'این هفته' : offset === -1 ? 'هفتهٔ گذشته' : offset === 1 ? 'هفتهٔ آینده' : `${dayShort(start)} تا ${dayShort(end)}`,
+    title.replaceChildren(offset === 0 ? (SETTINGS.weekMode === 'calendar' ? 'این هفته' : '۷ روز آینده') : offset === -1 ? 'هفتهٔ گذشته' : offset === 1 ? 'هفتهٔ آینده' : `${dayShort(start)} تا ${dayShort(end)}`,
       h('small', {}, `${dayShort(start)} تا ${dayShort(end)}`));
 
     days.replaceChildren();
