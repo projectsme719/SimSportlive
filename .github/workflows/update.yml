@@ -31,6 +31,12 @@ jobs:
         env:
           PAGES_URL: ${{ vars.PAGES_URL }}
 
+      - name: Fetch news and translate (Gemini)
+        run: node scripts/news.mjs
+        continue-on-error: true       # اگر Gemini/RSS خطا داد، بقیهٔ کارها ادامه پیدا کند
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
       - name: Send Telegram alerts
         run: node scripts/notify.mjs
         env:
@@ -40,9 +46,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add state/notified.json
+          git add -A state 2>/dev/null || true
           if ! git diff --cached --quiet; then
-            git commit -m "chore: notification state"
+            git commit -m "chore: state"
             git pull --rebase origin main
             git push
           fi
