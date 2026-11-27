@@ -1,7 +1,7 @@
 // صفحهٔ ۲: امروز — بازی‌های امروز با نتیجهٔ زنده + اخبار
 import { LEAGUES } from '../../config/leagues.js';
 import { byTime, kickoffMs } from '../../shared/format.js';
-import { agoLabel, hhmm, ymd } from '../../shared/time.js';
+import { dayGreg, dayLabel, ymd } from '../../shared/time.js';
 import { leagueFilter } from '../components/filters.js';
 import { matchCard } from '../components/matchCard.js';
 import { h } from '../lib/dom.js';
@@ -11,13 +11,15 @@ export function TodayPage() {
   let st = null;
   const filter = leagueFilter(render);
   const summary = h('span', { class: 'sub' });
+  const dateLine = h('div', { class: 'sub' });
   const list = h('div', {});
   const news = h('section', { class: 'news' });
-  const el = h('div', { class: 'stack' }, h('div', {}, h('h2', {}, 'امروز'), summary), filter.el, list, news);
+  const el = h('div', { class: 'stack' }, h('div', {}, h('h2', {}, 'امروز'), dateLine, summary), filter.el, list, news);
 
   function render() {
     if (!st) return;
     const today = ymd(Date.now());
+    dateLine.textContent = `${dayLabel(today)} — ${dayGreg(today)}`;
     const all = st.matches.filter((m) => ymd(kickoffMs(m)) === today);
     const live = all.filter((m) => m.phase === 'live').length;
     summary.textContent = `${all.length} بازی${live ? ` — ${live} زنده` : ''}`;
