@@ -2,7 +2,9 @@
 export const SETTINGS = {
   appName: 'SimSport Live',
   timeZone: 'Asia/Kabul',        // همهٔ ساعت‌ها به وقت افغانستان
-  weekStartDay: 6,               // ۶ = شنبه (۰ = یک‌شنبه)
+  weekMode: 'rolling',           // 'rolling' = ۷ روز از «امروز» به بعد | 'calendar' = هفتهٔ شنبه تا جمعه
+  weekStartDay: 6,               // فقط برای weekMode:'calendar' — ۶ = شنبه (۰ = یک‌شنبه)
+  persianDateShift: 0,           // اگر تاریخ شمسی با تقویم شما یک روز فرق داشت: 1 یا -1
   persianTeamNames: true,        // نام تیم‌ها فارسی (از config/teams-fa.js)
   refreshSeconds: 120,           // هر چند ثانیه مینی‌اپ داده را دوباره بخواند
 
