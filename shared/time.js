@@ -24,8 +24,9 @@ export const weekStart = (s, startDay = SETTINGS.weekStartDay) => addDays(s, -((
 const faDay = new Intl.DateTimeFormat('fa-AF-u-ca-persian', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' });
 const faShort = new Intl.DateTimeFormat('fa-AF-u-ca-persian', { day: 'numeric', month: 'long', timeZone: 'UTC' });
 const en = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' });
-export const dayLabel = (s) => faDay.format(utc(s));        // «شنبه ۶ قوس»
-export const dayShort = (s) => faShort.format(utc(s));      // «۶ قوس»
+const fa = (s) => utc(s) + SETTINGS.persianDateShift * 86400000;
+export const dayLabel = (s) => faDay.format(fa(s));        // «جمعه ۶ قوس»
+export const dayShort = (s) => faShort.format(fa(s));      // «۶ قوس»
 export const dayGreg = (s) => en.format(utc(s));            // «27 Nov»
 export const agoLabel = (ms) => {
   const m = Math.round((Date.now() - ms) / 60000);
